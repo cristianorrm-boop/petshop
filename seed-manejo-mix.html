@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Importar Categorias – Manejo Mix</title>
-  <!-- Página de importação em lote. Por enquanto só categorias; quando
-       tivermos fotos/descrições de produtos, dá pra estender esse mesmo
-       arquivo com um array de produtos, igual fizemos no Burger House. -->
+  <title>Importar Catálogo – Manejo Mix</title>
+  <!-- Página de importação em lote. Vai crescendo conforme as categorias
+       de produtos chegam (rações primeiro, depois medicamentos, etc.),
+       igual fizemos no Burger House. -->
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
@@ -25,8 +25,8 @@
 </head>
 <body>
 
-<h1>🐾 Importar Categorias — Manejo Mix</h1>
-<p>Faça login com o usuário admin e clique no botão pra criar as 4 categorias iniciais. Pode rodar de novo sem medo — sempre atualiza as mesmas, nunca duplica.</p>
+<h1>🐾 Importar Catálogo — Manejo Mix</h1>
+<p>Faça login com o usuário admin e clique no botão pra criar/atualizar categorias e produtos de uma vez. Pode rodar quantas vezes quiser — sempre atualiza os mesmos itens, nunca duplica.</p>
 
 <div id="login-box">
   <input type="email" id="email-input" placeholder="E-mail do admin">
@@ -35,7 +35,7 @@
   <span id="login-error">E-mail ou senha inválidos.</span>
 </div>
 
-<button id="btn" disabled>🚀 Importar Categorias</button>
+<button id="btn" disabled>🚀 Importar Catálogo</button>
 
 <div id="log"><span class="info">Faça login para habilitar a importação.</span></div>
 
@@ -46,10 +46,72 @@
 
 <script>
 const categorias = [
-  { id: "racoes",      nome: "Rações",      icone: "fa-bone",         ordem: 1 },
-  { id: "petiscos",    nome: "Petiscos",    icone: "fa-cookie-bite",  ordem: 2 },
-  { id: "medicamentos",nome: "Medicamentos",icone: "fa-pills",        ordem: 3 },
-  { id: "acessorios",  nome: "Acessórios",  icone: "fa-bag-shopping", ordem: 4 },
+  { id: "racoes",          nome: "Rações",          icone: "fa-bone",         ordem: 1 },
+  { id: "medicamentos",    nome: "Medicamentos",    icone: "fa-pills",        ordem: 2 },
+  { id: "higiene-e-beleza",nome: "Higiene e Beleza",icone: "fa-shower",       ordem: 3 },
+  { id: "petiscos",        nome: "Petiscos",        icone: "fa-cookie-bite", ordem: 4 },
+  { id: "acessorios",      nome: "Acessórios",      icone: "fa-bag-shopping", ordem: 5 },
+];
+
+// IDs de produto são números sequenciais simples, igual nos outros
+// catálogos — vai crescendo conforme as categorias chegam.
+const produtos = [
+  // ── RAÇÕES ───────────────────────────────────────────────────────────────
+  {
+    id: 1, categoria: "racoes", nome: "Origens Class Premium Cães Carne e Frango 15kg", preco: 155.19,
+    imagem: "./assets/origens-class-premium.webp",
+    descricao: "Ração premium para cães, sabor carne e frango, indicada para todos os portes. Pacote de 15kg.",
+  },
+  {
+    // ⚠️ preço informado sem o tamanho específico (o produto sai em 1kg, 3kg
+    // ou 10,1kg) — confirmar com o Cristiano qual tamanho corresponde a
+    // R$118,49 antes de divulgar pro cliente.
+    id: 2, categoria: "racoes", nome: "Origens Class Cães Adultos Carne e Frango", preco: 118.49,
+    imagem: "./assets/origens-class.webp",
+    descricao: "Ração completa e balanceada para cães adultos, sabor carne e frango, com prebióticos para saúde intestinal e fórmula que favorece pelagem brilhante.",
+  },
+  {
+    id: 3, categoria: "racoes", nome: "Ração Origens Gatos Adultos Frango 10,1kg", preco: 195.99,
+    imagem: "./assets/origens-gatos-adultos.webp",
+    descricao: "Ração para gatos adultos, sabor frango, com ômegas 3 e 6, biotina e zinco, sem corantes nem aromatizantes artificiais.",
+  },
+  {
+    id: 4, categoria: "racoes", nome: "Origens Gatos Castrados Adultos Salmão 3kg", preco: 76.29,
+    imagem: "./assets/origens-gatos-castrados.webp",
+    descricao: "Ração para gatos castrados, sabor salmão, com controle do pH urinário e prebióticos para boa digestão.",
+  },
+  {
+    // Também existe a versão 20kg (R$204,99) — deixei de fora por ora pra
+    // manter o catálogo enxuto; fácil de adicionar depois.
+    id: 5, categoria: "racoes", nome: "Ração Golden Adulto Frango e Carne 15kg", preco: 159.99,
+    imagem: "./assets/golden-adulto.webp",
+    descricao: "Ração para cães adultos, sabor frango e carne, blend de proteínas para músculos mais fortes e redução do odor das fezes.",
+  },
+  {
+    id: 6, categoria: "racoes", nome: "Ração Golden Filhotes Frango 10kg", preco: 159.99,
+    imagem: "./assets/golden-filhotes.webp",
+    descricao: "Ração para filhotes de raças pequenas, sabor frango com arroz.",
+  },
+  {
+    id: 7, categoria: "racoes", nome: "Ração Premier Gatos Adultos Salmão 10kg", preco: 184.50,
+    imagem: "./assets/premier-gatos-adultos.webp",
+    descricao: "Ração para gatos adultos, sabor salmão, com controle do pH urinário, alta digestibilidade e prebióticos.",
+  },
+  {
+    id: 8, categoria: "racoes", nome: "Ração Whiskas Gatos Adultos Carne 10kg", preco: 178.99,
+    imagem: "./assets/whiskas-gatos-adultos-carne.png",
+    descricao: "Ração premium para gatos adultos, sabor carne, nuggets crocantes com recheio macio e prebióticos.",
+  },
+  {
+    id: 9, categoria: "racoes", nome: "Ração Royal Canin Mini Adulto 8kg", preco: 274.65,
+    imagem: "./assets/royal-canin-mini-adulto.webp",
+    descricao: "Ração super premium para cães de porte pequeno (1 a 10kg), ajuda a limitar o acúmulo de placa bacteriana e melhora a pelagem.",
+  },
+  {
+    id: 10, categoria: "racoes", nome: "Sachê Whiskas Ração Úmida Carne ao Molho 85g", preco: 19.99,
+    imagem: "./assets/sache-whiskas.png",
+    descricao: "Ração úmida em sachê para gatos adultos, sabor carne ao molho, sem conservantes nem corantes artificiais.",
+  },
 ];
 
 firebase.initializeApp(firebaseConfig);
@@ -111,7 +173,29 @@ btn.addEventListener("click", async () => {
   }
 
   addLog("", "info");
-  addLog(`━━━ CONCLUÍDO: ${ok} categorias importadas, ${erros} erros ━━━`, erros > 0 ? "err" : "info");
+  addLog("▶ Importando produtos...", "info");
+  for (const p of produtos) {
+    try {
+      await db.collection("produtos").doc(String(p.id)).set({
+        ...p,
+        codigoBarras: null,
+        ativo: true,
+        destaque: false,
+        entrega: true,
+        variacoes: [],
+        adicionaisGrupos: [],
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      addLog(`✔ [${p.id}] ${p.nome}`, "ok");
+      ok++;
+    } catch (e) {
+      addLog(`✘ [${p.id}] ${p.nome} — ${e.message}`, "err");
+      erros++;
+    }
+  }
+
+  addLog("", "info");
+  addLog(`━━━ CONCLUÍDO: ${ok} itens importados, ${erros} erros ━━━`, erros > 0 ? "err" : "info");
   btn.disabled = false;
 });
 </script>
