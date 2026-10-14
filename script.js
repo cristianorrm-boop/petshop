@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // em vez de sumir, para o cliente ver que o produto existe mas está fora de estoque.
     let produtos = [];
     try {
-        const snap = await db.collection("produtos").orderBy("criadoEm", "desc").get();
+        const snap = await db.collection("produtos").orderBy("id").get();
         produtos = snap.docs.map((d) => ({ ...d.data() }));
     } catch (e) {
         console.error("Erro ao carregar produtos do Firebase:", e);
