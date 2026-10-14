@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title> Manejo Mix Pet Shop </title>
+
+    <!-- Fontes do Google -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Montserrat:wght@400;500;700&display=swap"
+        rel="stylesheet" />
+
+    <!-- Ícones (Font Awesome) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- App instalável (PWA) -->
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#4A0E0E" />
+    <link rel="apple-touch-icon" href="./assets/logo-manejo-mix-instagram.jpg" />
+
+    <!-- Prévia ao compartilhar o link (WhatsApp, redes sociais, etc.) -->
+    <!-- TODO: quando o site tiver um domínio próprio, trocar og:url pela URL final -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Manejo Mix Pet Shop">
+    <meta property="og:description" content="Rações, petiscos, medicamentos e acessórios para o seu pet. Confira nosso catálogo!">
+    <meta property="og:image" content="./assets/logo-manejo-mix-instagram.jpg">
+    <meta property="og:url" content="https://SEU-DOMINIO-AQUI.com">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Manejo Mix Pet Shop">
+    <meta name="twitter:description" content="Rações, petiscos, medicamentos e acessórios para o seu pet. Confira nosso catálogo!">
+    <meta name="twitter:image" content="./assets/logo-manejo-mix-instagram.jpg">
+</head>
+
+<body>
+    <header>
+        <a href="#" class="logo">
+            <img src="./assets/logo-manejo-mix-instagram.jpg" alt="Logo Manejo Mix Pet Shop" class="logo-image" />
+            <span class="logo-text"> Manejo Mix </span>
+        </a>
+
+        <div class="search-container">
+            <input placeholder="Buscar por um Produto..." class="search-input" />
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+
+        <!-- Ícone da sacola -->
+        <div class="cart-icon">
+            <i class="fa-solid fa-bag-shopping"></i>
+            <span class="cart-badge">0</span>
+        </div>
+    </header>
+
+    <div class="categories-container">
+    <nav class="categories-bar" id="categories-bar">
+            <button class="category-btn active" data-category="all">
+            <i class="fa-solid fa-layer-group"></i> Todos
+        </button>
+        </nav>
+    </div>
+
+    <section class="hero-section">
+        <div class="hero-content">
+            <span class="hero-tag">Manejo Mix Pet Shop</span>
+            <h2>Tudo pro seu pet, num só lugar</h2>
+            <p>Rações, petiscos, medicamentos e acessórios com entrega rápida</p>
+        </div>
+    </section>
+
+    <section class="destaques-section" id="destaques-section" style="display:none">
+        <h2 class="destaques-title"><i class="fa-solid fa-star"></i> Destaques da Semana</h2>
+        <div class="destaques-container products-container"><!-- cards gerados pelo script --></div>
+    </section>
+
+    <main class="products" id="products-section">
+        <div class="products-container"></div>
+    </main>
+
+    <div class="product-modal-overlay" id="product-modal-overlay">
+        <div class="product-modal" role="dialog" aria-modal="true">
+            <button class="product-modal-close" id="product-modal-close" aria-label="Fechar">&times;</button>
+            <div class="product-modal-img-wrap">
+                <img id="product-modal-img" src="" alt="" loading="lazy"
+                     onerror="this.onerror=null;this.src='./assets/placeholder.svg'">
+                <span class="destaque-badge" id="product-modal-destaque" style="display:none">
+                    <i class="fa-solid fa-star" aria-hidden="true"></i> Destaque
+                </span>
+            </div>
+            <div class="product-modal-info">
+                <h3 id="product-modal-nome"></h3>
+                <p id="product-modal-descricao" class="product-modal-descricao"></p>
+                <div id="product-modal-variacoes"></div>
+                <p id="product-modal-preco" class="product-modal-preco"></p>
+                <button id="product-modal-comprar" class="product-button">Adicionar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-overlay"></div>
+    
+    <aside class="cart-sidebar">
+        <div class="cart-header">
+            <h3>Sua Sacola <i class="fa-solid fa-bag-shopping"></i></h3>
+            <button class="close-cart-btn">&times;</button>
+        </div>
+
+        <div class="cart-body"></div>
+
+        <div class="cart-footer">
+            <div class="options-toggle">
+                <button class="delivery-btn active" data-option="delivery">
+                    <i class="fa-solid fa-truck-fast"></i> Entrega
+                </button>
+                <button class="delivery-btn" data-option="pickup">
+                    <i class="fa-solid fa-store"></i> Retirada
+                </button>
+            </div>
+
+            <div id="delivery-form-container">
+                <div class="form-group">
+                    <label for="delivery-name">Nome do Responsável</label>
+                    <input type="text" id="delivery-name" placeholder="Nome e sobrenome" required />
+                </div>
+                <div class="form-group">
+                    <label for="delivery-phone">Seu Telefone (WhatsApp)</label>
+                    <input type="tel" id="delivery-phone" placeholder="(XX) XXXXX-XXXX" maxlength="15" required />
+                </div>
+                <div class="form-group">
+                    <label for="delivery-cep">CEP</label>
+                    <input type="text" id="delivery-cep" placeholder="00000-000" maxlength="9" required />
+                </div>
+                <div class="form-group">
+                    <label for="delivery-address">Endereço</label>
+                    <textarea id="delivery-address" placeholder="Rua, Número, Bairro, Complemento" required></textarea>
+                </div>
+
+                <div class="delivery-fee-notice">A taxa de entrega será calculada de acordo com a sua região.</div>
+
+                <div class="payment-options-container">
+                    <h4>Forma de Pagamento</h4>
+
+                    <label class="payment-option selected">
+                        <input type="radio" name="payment" value="PIX" checked />
+                        <span class="radio-custom"></span> PIX
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="Cartão de Crédito" />
+                        <span class="radio-custom"></span> Cartão de Crédito
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="Cartão de Débito" />
+                        <span class="radio-custom"></span> Cartão de Débito
+                    </label>
+
+                    <label class="payment-option">
+                        <input type="radio" name="payment" value="Dinheiro" />
+                        <span class="radio-custom"></span> Dinheiro
+                    </label>
+
+                    <div id="troco-container" style="display: none;">
+                        <div class="form-group">
+                            <label for="troco-para">Precisa de troco para quanto?</label>
+                            <input type="number" id="troco-para" placeholder="Ex: 100" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pickup-form-container" style="display: none;">
+                <div class="form-group">
+                    <label for="pickup-name">Nome para Retirada</label>
+                    <input type="text" id="pickup-name" placeholder="Digite nome e sobrenome" required />
+                </div>
+                <div class="form-group">
+                    <label>Agende a Data e Hora</label>
+                    <div class="date-time-row">
+                        <input type="date" id="pickup-date" required />
+                        <select id="pickup-time" required>
+                            <option value="" disabled selected>Selecione</option>
+                            <option value="10:00">10:00</option>
+                            <option value="11:00">11:00</option>
+                            <option value="14:00">14:00</option>
+                            <option value="15:00">15:00</option>
+                            <option value="16:00">16:00</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="coupon-container">
+                <input type="text" id="coupon-input" placeholder="Cupom de desconto" />
+                <button id="apply-coupon-btn">Aplicar</button>
+            </div>
+
+            <p id="coupon-feedback" class="coupon-feedback"></p>
+
+            <div class="cart-summary">
+                <div class="summary-line"><span>Subtotal</span><span id="cart-subtotal">R$ 0,00</span></div>
+                <div class="summary-line discount-line" style="display: none;">
+                    <span>Desconto</span><span id="cart-discount">- R$ 0,00</span>
+                </div>
+                <div class="summary-line total"><span>Total</span><span id="cart-total">R$ 0,00</span></div>
+            </div>
+        </div>
+
+        <div class="finish-order-btn-container">
+            <button id="finish-order-btn" class="finish-order-btn" disabled>
+                <i class="fab fa-whatsapp"></i> Finalizar Pedido
+            </button>
+        </div>
+    </aside>
+
+    <div class="view-cart-banner">
+        <p>Total: <span id="banner-total">R$ 0,00</span></p>
+        <!-- Texto atualizado -->
+        <button class="view-cart-banner-btn">Ver Sacola</button>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 - Manejo Mix Pet Shop. Todos os direitos reservados.</p>
+    </footer>
+
+    <!-- JS -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="script.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./sw.js").catch(() => { });
+            });
+        }
+    </script>
+</body>
+
+</html>
