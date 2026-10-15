@@ -231,7 +231,7 @@
   <div class="sidebar" id="sidebar">
     <button class="side-btn active" onclick="mudarTab('produtos',this)"><i class="fa-solid fa-box"></i> Produtos</button>
     <button class="side-btn" onclick="mudarTab('categorias',this)"><i class="fa-solid fa-tags"></i> Categorias</button>
-    <button class="side-btn" onclick="mudarTab('variacoes',this)"><i class="fa-solid fa-shirt"></i> Variações</button>
+    <button class="side-btn" onclick="mudarTab('variacoes',this)"><i class="fa-solid fa-ruler"></i> Variações</button>
     <button class="side-btn" onclick="mudarTab('cupons',this)"><i class="fa-solid fa-ticket"></i> Cupons</button>
     <button class="side-btn" onclick="mudarTab('pedidos',this)"><i class="fa-solid fa-receipt"></i> Pedidos Online</button>
     <button class="side-btn" onclick="mudarTab('pdv',this)"><i class="fa-solid fa-cash-register"></i> PDV</button>
@@ -587,7 +587,7 @@
 <div class="modal-overlay" id="modal-tipo-variacao">
   <div class="modal">
     <button class="modal-close" onclick="fecharModal('modal-tipo-variacao')">&times;</button>
-    <h2 id="tipo-variacao-titulo"><i class="fa-solid fa-shirt"></i> Tipo de variação</h2>
+    <h2 id="tipo-variacao-titulo"><i class="fa-solid fa-ruler"></i> Tipo de variação</h2>
     <input type="hidden" id="tipo-var-id-original">
     <div class="form-group full"><label>Nome do tipo *</label><input type="text" id="tipo-var-nome" placeholder="Ex: Sabor, Tamanho..."></div>
     <div class="form-group full" style="margin-top:14px">
@@ -1155,7 +1155,7 @@ async function carregarTiposVariacao() {
 function renderizarTiposVariacao() {
   const grid = document.getElementById("variacoes-grid");
   if (!todosTiposVariacao.length) {
-    grid.innerHTML = `<div class="empty-state"><i class="fa-solid fa-shirt"></i><p>Nenhum tipo de variação cadastrado.</p></div>`;
+    grid.innerHTML = `<div class="empty-state"><i class="fa-solid fa-ruler"></i><p>Nenhum tipo de variação cadastrado.</p></div>`;
     return;
   }
   grid.innerHTML = todosTiposVariacao.map(t => `
