@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // --- CARREGAR CONFIGURAÇÕES DA LOJA DO FIREBASE ---
     const CONFIG_PADRAO = {
         nomeLoja: "Manejo Mix Pet Shop",
-        whatsapp: "558182362638",
+        whatsapp: "5534988147596",
         retiradaDias: [0, 1, 2, 3, 4, 5, 6],
         retiradaHoraInicio: "08:00",
         retiradaHoraFim: "18:00",
@@ -137,7 +137,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const logoTextEl = document.querySelector(".logo-text");
         if (logoTextEl) logoTextEl.textContent = configLoja.nomeLoja;
 
-        const footerEl = document.querySelector("footer p");
+        const footerEl = document.querySelector(".footer-copyright");
         if (footerEl) {
             const ano = new Date().getFullYear();
             footerEl.textContent = `© ${ano} - ${configLoja.nomeLoja}. Todos os direitos reservados.`;

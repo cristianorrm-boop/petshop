@@ -438,6 +438,11 @@ footer{
   margin-bottom:1.2rem; transition:opacity .2s;
 }
 .footer-instagram:hover{opacity:.8;}
+.footer-instagram i{
+  font-size:1.15rem;
+  background:radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+}
 
 /* --- MEDIA QUERIES --- */
 @media (min-width:640px){
