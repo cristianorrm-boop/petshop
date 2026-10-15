@@ -233,6 +233,7 @@
     <button class="side-btn" onclick="mudarTab('categorias',this)"><i class="fa-solid fa-tags"></i> Categorias</button>
     <button class="side-btn" onclick="mudarTab('variacoes',this)"><i class="fa-solid fa-ruler"></i> Variações</button>
     <button class="side-btn" onclick="mudarTab('cupons',this)"><i class="fa-solid fa-ticket"></i> Cupons</button>
+    <button class="side-btn" onclick="mudarTab('clientes',this)"><i class="fa-solid fa-address-book"></i> Clientes</button>
     <button class="side-btn" onclick="mudarTab('pedidos',this)"><i class="fa-solid fa-receipt"></i> Pedidos Online</button>
     <button class="side-btn" onclick="mudarTab('pdv',this)"><i class="fa-solid fa-cash-register"></i> PDV</button>
     <button class="side-btn" onclick="mudarTab('relatorio',this)"><i class="fa-solid fa-chart-column"></i> Relatório</button>
@@ -296,6 +297,18 @@
       </div>
     </div>
 
+    <div id="tab-clientes" class="tab-panel">
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="abrirModalCliente()"><i class="fa-solid fa-plus"></i> Novo Cliente</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Telefone</th><th>Aniversário</th><th>Pet</th><th>Qtd. Animais</th><th>Ações</th></tr></thead>
+          <tbody id="clientes-tabela-corpo"><tr><td colspan="6"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="tab-pedidos" class="tab-panel">
       <p style="color:var(--muted);font-size:.85rem;margin-bottom:1rem">Pedidos feitos pelos clientes no site (checkout via WhatsApp). Isso é só um histórico — o pedido em si já foi enviado pro seu WhatsApp.</p>
       <div class="table-wrap">
@@ -313,7 +326,7 @@
       </div>
       <div class="pdv-layout">
         <div class="pdv-products">
-          <input type="text" id="pdv-busca" placeholder="🔍 Buscar produto" oninput="renderPdvGrid()">
+          <input type="text" id="pdv-busca" placeholder="🔍 Buscar produto ou passar o leitor de código de barras" oninput="renderPdvGrid()" onkeydown="pdvBarcodeKeydown(event)" autofocus>
           <div class="pdv-grid" id="pdv-grid"></div>
         </div>
         <div class="pdv-cart">
@@ -485,6 +498,8 @@
       <div class="form-group full"><label>Nome do produto *</label><input type="text" id="form-nome" placeholder="Ex: Creatina micronizada 1kg"></div>
       <div class="form-group"><label>Categoria *</label><select id="form-categoria"><option value="">Selecione...</option></select></div>
       <div class="form-group"><label>Preço (R$) *</label><input type="number" id="form-preco" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="form-group full"><label>Código de barras <small style="color:var(--muted)">(opcional, pra usar no leitor do PDV)</small></label><input type="text" id="form-codigo-barras" placeholder="Passe o leitor aqui ou digite o código"></div>
+      <div class="form-group"><label>Validade <small style="color:var(--muted)">(opcional)</small></label><input type="date" id="form-validade"></div>
 
       <!-- CAMPO DE IMAGEM COM UPLOAD -->
       <div class="form-group full">
@@ -634,6 +649,26 @@
   </div>
 </div>
 
+<!-- MODAL CLIENTE -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal">
+    <button class="modal-close" onclick="fecharModal('modal-cliente')">&times;</button>
+    <h2 id="cliente-modal-titulo"><i class="fa-solid fa-address-book"></i> Cliente</h2>
+    <div class="form-grid">
+      <input type="hidden" id="cliente-doc-id">
+      <div class="form-group full"><label>Nome do cliente *</label><input type="text" id="cliente-nome" placeholder="Ex: Maria Silva"></div>
+      <div class="form-group"><label>Telefone</label><input type="text" id="cliente-telefone" placeholder="(34) 99999-9999"></div>
+      <div class="form-group"><label>Aniversário</label><input type="date" id="cliente-aniversario"></div>
+      <div class="form-group"><label>Nome do pet</label><input type="text" id="cliente-pet" placeholder="Ex: Rex"></div>
+      <div class="form-group"><label>Quantidade de animais</label><input type="number" id="cliente-qtd-animais" min="0" step="1" placeholder="1"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal('modal-cliente')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarCliente()"><i class="fa-solid fa-floppy-disk"></i> Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL CONFIRMAR -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal">
@@ -696,11 +731,12 @@ auth.onAuthStateChanged(user => {
 let todosProdutos   = [];
 let todasCategorias = [];
 let todosCupons     = [];
+let todosClientes   = [];
 let todosTiposVariacao = [];
 let _arquivosSelecionados = { 1: null, 2: null };
 
 // ── INIT ──────────────────────────────────────────────────────────────────
-async function inicializar() { await Promise.all([carregarCategorias(), carregarProdutos(), carregarCupons(), carregarConfiguracoes(), carregarVendasHoje(), carregarPedidos(), carregarTiposVariacao()]); }
+async function inicializar() { await Promise.all([carregarCategorias(), carregarProdutos(), carregarCupons(), carregarClientes(), carregarConfiguracoes(), carregarVendasHoje(), carregarPedidos(), carregarTiposVariacao()]); }
 
 // ── TABS ──────────────────────────────────────────────────────────────────
 function mudarTab(tab, btn) {
@@ -761,6 +797,18 @@ function filtrar() {
   mostrarTabela(lista);
 }
 
+// Mostra a validade colorida: vermelho se já venceu, laranja se vence em
+// até 30 dias, cinza normal caso contrário.
+function validadeBadge(validade) {
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const dataValidade = new Date(validade + "T00:00:00");
+  const dias = Math.round((dataValidade - hoje) / 86400000);
+  const dataFmt = dataValidade.toLocaleDateString('pt-BR');
+  if (dias < 0) return `<span style="color:var(--red);font-size:.72rem"><i class="fa-solid fa-triangle-exclamation"></i> Venceu em ${dataFmt}</span>`;
+  if (dias <= 30) return `<span style="color:#b8860b;font-size:.72rem"><i class="fa-solid fa-clock"></i> Vence em ${dataFmt}</span>`;
+  return `<span style="color:var(--muted);font-size:.72rem"><i class="fa-solid fa-calendar"></i> Validade: ${dataFmt}</span>`;
+}
+
 function mostrarTabela(lista) {
   const tbody = document.getElementById("tabela-corpo");
   if (!lista.length) {
@@ -772,7 +820,7 @@ function mostrarTabela(lista) {
       <td>${p.imagem ? `<img class="prod-img" src="${p.imagem}" alt="${p.nome}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">` : ""}
           <div class="prod-img-placeholder" ${p.imagem ? "style='display:none'" : ""}><i class="fa-solid fa-image"></i></div></td>
       <td style="color:var(--muted);font-size:.8rem">${p.id || p.docId}</td>
-      <td style="max-width:220px"><strong>${p.nome}</strong>${p.descricao ? `<br><span style="color:var(--muted);font-size:.76rem">${p.descricao.substring(0,60)}${p.descricao.length>60?'…':''}</span>` : ''}</td>
+      <td style="max-width:220px"><strong>${p.nome}</strong>${p.descricao ? `<br><span style="color:var(--muted);font-size:.76rem">${p.descricao.substring(0,60)}${p.descricao.length>60?'…':''}</span>` : ''}${p.codigoBarras ? `<br><span style="color:var(--muted);font-size:.72rem;font-family:monospace"><i class="fa-solid fa-barcode"></i> ${p.codigoBarras}</span>` : ''}${p.validade ? `<br>${validadeBadge(p.validade)}` : ''}</td>
       <td><span style="font-size:.8rem;color:var(--muted)">${p.categoria || '–'}</span></td>
       <td style="font-weight:700;color:var(--gold)">R$ ${Number(p.preco||0).toFixed(2).replace('.',',')}</td>
       <td>${p.ativo !== false ? '<span class="badge badge-ativo">Ativo</span>' : '<span class="badge badge-inativo">Inativo</span>'}${p.destaque ? ' <span class="badge badge-destaque">★ Destaque</span>' : ''}</td>
@@ -898,6 +946,8 @@ function abrirModalCriar() {
   document.getElementById("form-nome").value     = "";
   document.getElementById("form-categoria").value= "";
   document.getElementById("form-preco").value    = "";
+  document.getElementById("form-codigo-barras").value = "";
+  document.getElementById("form-validade").value = "";
   document.getElementById("form-imagem").value   = "";
   document.getElementById("form-imagem2").value  = "";
   document.getElementById("form-descricao").value= "";
@@ -916,6 +966,8 @@ function abrirModalEditar(docId) {
   document.getElementById("form-id").value           = docId;
   document.getElementById("form-nome").value         = p.nome || "";
   document.getElementById("form-preco").value        = p.preco || "";
+  document.getElementById("form-codigo-barras").value = p.codigoBarras || "";
+  document.getElementById("form-validade").value     = p.validade || "";
   document.getElementById("form-imagem").value       = p.imagem || "";
   document.getElementById("form-imagem2").value      = p.imagem2 || "";
   document.getElementById("form-descricao").value    = p.descricao || "";
@@ -956,11 +1008,18 @@ async function salvarProduto() {
   const nome      = document.getElementById("form-nome").value.trim();
   const categoria = document.getElementById("form-categoria").value;
   const preco     = parseFloat(document.getElementById("form-preco").value);
+  const codigoBarras = document.getElementById("form-codigo-barras").value.trim();
+  const validade  = document.getElementById("form-validade").value || null;
   const descricao = document.getElementById("form-descricao").value.trim();
   const ativo     = document.getElementById("form-ativo").checked;
   const destaque  = document.getElementById("form-destaque").checked;
 
   if (!nome || !categoria || isNaN(preco)) { toast("Preencha nome, categoria e preço.", "err"); return; }
+
+  if (codigoBarras) {
+    const jaUsado = todosProdutos.find(p => p.codigoBarras === codigoBarras && p.docId !== docId);
+    if (jaUsado) { toast(`Este código de barras já está no produto "${jaUsado.nome}".`, "err"); return; }
+  }
 
   // Resolve imagens: upload tem prioridade sobre URL
   let imagem = document.getElementById("form-imagem").value.trim();
@@ -982,7 +1041,7 @@ async function salvarProduto() {
   });
   const variacoes = Object.values(variacoesMap);
 
-  const dados = { nome, categoria, preco, imagem, imagem2, descricao, ativo, destaque, variacoes };
+  const dados = { nome, categoria, preco, codigoBarras: codigoBarras || null, validade, imagem, imagem2, descricao, ativo, destaque, variacoes };
   try {
     if (docId) {
       await db.collection("produtos").doc(docId).update(dados);
@@ -1383,6 +1442,89 @@ async function salvarCupom() {
   } catch(e) { toast("Erro: " + e.message, "err"); }
 }
 
+// ── CLIENTES ──────────────────────────────────────────────────────────────
+async function carregarClientes() {
+  try {
+    const snap = await db.collection("clientes").get();
+    todosClientes = snap.docs.map(d => ({ docId: d.id, ...d.data() }))
+      .sort((a, b) => (a.nome || "").localeCompare(b.nome || "", "pt-BR"));
+    renderizarClientes();
+  } catch(e) { toast("Erro ao carregar clientes: " + e.message, "err"); }
+}
+
+function renderizarClientes() {
+  const tbody = document.getElementById("clientes-tabela-corpo");
+  if (!tbody) return;
+  if (!todosClientes.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-address-book"></i><p>Nenhum cliente cadastrado ainda.</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = todosClientes.map(c => {
+    const aniversarioFmt = c.aniversario ? new Date(c.aniversario + "T00:00:00").toLocaleDateString('pt-BR') : '–';
+    return `
+    <tr>
+      <td><strong>${c.nome}</strong></td>
+      <td>${c.telefone || '–'}</td>
+      <td>${aniversarioFmt}</td>
+      <td>${c.pet || '–'}</td>
+      <td style="text-align:center">${c.qtdAnimais ?? '–'}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost btn-sm" onclick="abrirModalClienteEditar('${c.docId}')"><i class="fa-solid fa-pen"></i></button>
+        <button class="btn btn-danger btn-sm" onclick="confirmarExclusao('cliente','${c.docId}','${(c.nome||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+
+function abrirModalCliente() {
+  document.getElementById("cliente-modal-titulo").innerHTML = '<i class="fa-solid fa-plus"></i> Novo Cliente';
+  document.getElementById("cliente-doc-id").value       = "";
+  document.getElementById("cliente-nome").value         = "";
+  document.getElementById("cliente-telefone").value     = "";
+  document.getElementById("cliente-aniversario").value  = "";
+  document.getElementById("cliente-pet").value           = "";
+  document.getElementById("cliente-qtd-animais").value  = "";
+  abrirModal("modal-cliente");
+}
+
+function abrirModalClienteEditar(docId) {
+  const c = todosClientes.find(x => x.docId === docId);
+  if (!c) return;
+  document.getElementById("cliente-modal-titulo").innerHTML = '<i class="fa-solid fa-pen"></i> Editar Cliente';
+  document.getElementById("cliente-doc-id").value       = docId;
+  document.getElementById("cliente-nome").value         = c.nome || "";
+  document.getElementById("cliente-telefone").value     = c.telefone || "";
+  document.getElementById("cliente-aniversario").value  = c.aniversario || "";
+  document.getElementById("cliente-pet").value           = c.pet || "";
+  document.getElementById("cliente-qtd-animais").value  = c.qtdAnimais ?? "";
+  abrirModal("modal-cliente");
+}
+
+async function salvarCliente() {
+  const docId      = document.getElementById("cliente-doc-id").value;
+  const nome       = document.getElementById("cliente-nome").value.trim();
+  const telefone   = document.getElementById("cliente-telefone").value.trim();
+  const aniversario = document.getElementById("cliente-aniversario").value || null;
+  const pet        = document.getElementById("cliente-pet").value.trim();
+  const qtdRaw     = document.getElementById("cliente-qtd-animais").value;
+  const qtdAnimais = qtdRaw ? parseInt(qtdRaw, 10) : null;
+
+  if (!nome) { toast("Preencha o nome do cliente.", "err"); return; }
+
+  const dados = { nome, telefone: telefone || null, aniversario, pet: pet || null, qtdAnimais };
+  try {
+    if (docId) {
+      await db.collection("clientes").doc(docId).update(dados);
+      toast("Cliente atualizado!", "ok");
+    } else {
+      await db.collection("clientes").add(dados);
+      toast("Cliente cadastrado!", "ok");
+    }
+    fecharModal("modal-cliente");
+    await carregarClientes();
+  } catch(e) { toast("Erro: " + e.message, "err"); }
+}
+
 // ── EXCLUSÃO ──────────────────────────────────────────────────────────────
 function confirmarExclusao(tipo, docId, nome) {
   document.getElementById("confirm-msg").textContent = `Excluir "${nome}"? Esta ação não pode ser desfeita.`;
@@ -1390,6 +1532,7 @@ function confirmarExclusao(tipo, docId, nome) {
     try {
       if (tipo === "produto") { await db.collection("produtos").doc(docId).delete(); await carregarProdutos(); }
       else if (tipo === "cupom") { await db.collection("cupons").doc(docId).delete(); await carregarCupons(); }
+      else if (tipo === "cliente") { await db.collection("clientes").doc(docId).delete(); await carregarClientes(); }
       else { await db.collection("categorias").doc(docId).delete(); await carregarCategorias(); popularSelectCategorias(); }
       toast("Excluído com sucesso.", "ok");
       fecharModal("confirm-modal");
@@ -1420,6 +1563,27 @@ function renderPdvGrid() {
       <div class="pdv-item-nome">${p.nome}</div>
       <div class="pdv-item-preco">R$ ${Number(p.preco||0).toFixed(2).replace('.',',')}</div>
     </div>`).join("");
+}
+
+// Chamado pelo onkeydown do #pdv-busca. Leitores de código de barras
+// funcionam como teclado: "digitam" o código bem rápido e mandam um Enter.
+function pdvBarcodeKeydown(e) {
+  if (e.key !== "Enter") return;
+  e.preventDefault();
+  const codigo = e.target.value.trim();
+  if (!codigo) return;
+
+  const produto = todosProdutos.find(p => p.codigoBarras && p.codigoBarras === codigo && p.ativo !== false);
+  e.target.value = "";
+  renderPdvGrid();
+
+  if (produto) {
+    pdvAdicionarItem(produto.docId);
+    toast(`${produto.nome} adicionado!`, "ok");
+  } else {
+    toast("Código de barras não encontrado.", "err");
+    e.target.focus();
+  }
 }
 
 function pdvAdicionarItem(docId) {
