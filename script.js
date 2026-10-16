@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // --- CARREGAR CATEGORIAS DO FIREBASE ---
     // Ordem padrão pedida pela loja. Categorias com "ordem" definida manualmente no
     // admin têm prioridade; as demais seguem esta lista; o resto cai no final (alfabético).
-    const ORDEM_PADRAO_CATEGORIAS = ["proteinas", "carboidratos", "creatina", "colageno", "acessorios"];
+    const ORDEM_PADRAO_CATEGORIAS = ["racoes", "medicamentos", "higiene-e-beleza", "petiscos", "acessorios", "vestuario"];
     const posicaoCategoria = (c) => {
         if (typeof c.ordem === "number") return c.ordem;
         const idx = ORDEM_PADRAO_CATEGORIAS.indexOf(c.id);
