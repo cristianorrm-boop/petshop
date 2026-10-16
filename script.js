@@ -71,6 +71,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Erro ao carregar categorias do Firebase:", e);
     }
 
+    // Reordena os produtos: primeiro pela ordem da categoria (a mesma que
+    // já define a barra de categorias), e dentro de cada categoria pelo id
+    // (ordem de cadastro). Assim, um produto novo cadastrado hoje numa
+    // categoria vai pro fim DAQUELA categoria, não pro fim da grade inteira.
+    const posicaoCategoriaPorId = {};
+    categorias.forEach((c, idx) => { posicaoCategoriaPorId[c.id] = idx; });
+    produtos.sort((a, b) => {
+        const pa = posicaoCategoriaPorId[a.categoria] ?? 9999;
+        const pb = posicaoCategoriaPorId[b.categoria] ?? 9999;
+        if (pa !== pb) return pa - pb;
+        return (Number(a.id) || 0) - (Number(b.id) || 0);
+    });
+
     const renderizarCategoriasBar = () => {
         const botoesExtra = categorias
             .map(
@@ -783,6 +796,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (input.value.trim() !== "") input.classList.remove("error");
             });
         });
+
+    // --- BOTÃO FLUTUANTE DO WHATSAPP ---
+    const botaoWhatsapp = document.createElement("a");
+    botaoWhatsapp.className = "whatsapp-float";
+    botaoWhatsapp.target = "_blank";
+    botaoWhatsapp.rel = "noopener";
+    botaoWhatsapp.setAttribute("aria-label", "Falar no WhatsApp");
+    botaoWhatsapp.innerHTML = `<i class="fab fa-whatsapp" aria-hidden="true"></i>`;
+    botaoWhatsapp.href = `https://wa.me/${configLoja.whatsapp}?text=${encodeURIComponent("Olá! Vim pelo site e tenho uma dúvida.")}`;
+    document.body.appendChild(botaoWhatsapp);
 
     // --- INICIALIZAÇÃO ---
     renderizarDestaques();

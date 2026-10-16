@@ -391,6 +391,11 @@
     <div id="tab-relatorio" class="tab-panel">
       <div class="toolbar">
         <input type="month" id="relatorio-mes" onchange="carregarRelatorio()">
+        <select id="relatorio-filtro-origem" onchange="renderRelatorio()">
+          <option value="todas">Todas as vendas</option>
+          <option value="loja">Só loja (PDV)</option>
+          <option value="online">Só online (site)</option>
+        </select>
       </div>
       <div class="stats-row">
         <div class="stat-card"><div class="num" id="relatorio-stat-qtd">–</div><div class="lbl">Vendas no mês</div></div>
@@ -1101,9 +1106,38 @@ function renderizarPedidos(pedidos) {
   }).join("");
 }
 
+// Marcar como "Atendido" gera uma venda no Relatório (igual uma venda do
+// PDV), só que etiquetada como "Online" — assim o faturamento do site entra
+// na conta, sem duplicar se a pessoa marcar/desmarcar várias vezes (só gera
+// a venda uma vez, controlado por "vendaGerada" no próprio pedido).
 async function alternarAtendidoPedido(docId, novoValor) {
-  await db.collection("pedidos").doc(docId).update({ atendido: novoValor });
-  await carregarPedidos();
+  try {
+    const pedidos = await db.collection("pedidos").doc(docId).get();
+    const p = pedidos.data();
+    const atualizacao = { atendido: novoValor };
+
+    if (novoValor && p && !p.vendaGerada) {
+      const venda = {
+        itens: (p.itens || []).map(i => ({ nome: i.nome, preco: i.preco, qtd: i.qtd })),
+        subtotal: p.subtotal || 0,
+        desconto: p.desconto || 0,
+        total: p.total || 0,
+        pagamentos: [{ forma: p.cliente?.pagamento || "A combinar", valor: p.total || 0 }],
+        pagamento: p.cliente?.pagamento || "A combinar",
+        cliente: p.cliente?.nome || (p.tipoEntrega === "delivery" ? "Cliente (entrega)" : "Cliente (retirada)"),
+        cupom: p.cupom || null,
+        pedidoOrigem: { pedidoId: docId, origem: p.tipoEntrega || "delivery" },
+        criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      const vendaRef = await db.collection("vendas").add(venda);
+      atualizacao.vendaGerada = true;
+      atualizacao.vendaId = vendaRef.id;
+    }
+
+    await db.collection("pedidos").doc(docId).update(atualizacao);
+    await carregarPedidos();
+    if (novoValor) await Promise.all([carregarVendasHoje(), carregarRelatorio()]);
+  } catch(e) { toast("Erro ao atualizar pedido: " + e.message, "err"); }
 }
 
 // ── CATEGORIAS ────────────────────────────────────────────────────────────
@@ -1764,11 +1798,16 @@ function linhaVenda(v, origem, comData) {
   const pagamentoTexto = Array.isArray(v.pagamentos)
     ? v.pagamentos.map(p => `${PAG_LABEL[p.forma] || p.forma} (R$ ${Number(p.valor||0).toFixed(2).replace('.',',')})`).join(" + ")
     : (PAG_LABEL[v.pagamento] || v.pagamento || '–');
+  // Mostra se a venda veio de um pedido online (entrega/retirada) ou se foi
+  // batida direto no PDV da loja (quando não tem pedidoOrigem).
+  const origemBadge = v.pedidoOrigem
+    ? `<span class="badge" style="background:#e3f0fb;color:var(--gold);margin-left:6px">Online · ${v.pedidoOrigem.origem === "delivery" ? "Entrega" : "Retirada"}</span>`
+    : '';
   return `
     <tr>
       ${comData ? `<td>${data}</td>` : ''}
       <td>${hora}</td>
-      <td>${v.cliente || '–'}</td>
+      <td>${v.cliente || '–'}${origemBadge}</td>
       <td style="max-width:260px"><span style="font-size:.8rem;color:var(--muted)">${itensResumo}</span></td>
       <td><span style="font-size:.8rem">${pagamentoTexto}</span></td>
       <td style="font-weight:700;color:var(--gold)">R$ ${Number(v.total||0).toFixed(2).replace('.',',')}</td>
@@ -1823,17 +1862,22 @@ async function carregarRelatorio() {
 }
 
 function renderRelatorio() {
-  const totalMes = vendasRelatorio.reduce((s,v) => s + Number(v.total||0), 0);
-  document.getElementById("relatorio-stat-qtd").textContent   = vendasRelatorio.length;
+  const filtro = document.getElementById("relatorio-filtro-origem")?.value || "todas";
+  let lista = vendasRelatorio;
+  if (filtro === "loja")   lista = lista.filter(v => !v.pedidoOrigem);
+  if (filtro === "online") lista = lista.filter(v => !!v.pedidoOrigem);
+
+  const totalMes = lista.reduce((s,v) => s + Number(v.total||0), 0);
+  document.getElementById("relatorio-stat-qtd").textContent   = lista.length;
   document.getElementById("relatorio-stat-total").textContent = "R$ " + totalMes.toFixed(2).replace('.',',');
-  document.getElementById("relatorio-stat-ticket").textContent= "R$ " + (vendasRelatorio.length ? totalMes / vendasRelatorio.length : 0).toFixed(2).replace('.',',');
+  document.getElementById("relatorio-stat-ticket").textContent= "R$ " + (lista.length ? totalMes / lista.length : 0).toFixed(2).replace('.',',');
 
   const tbody = document.getElementById("relatorio-tabela");
-  if (!vendasRelatorio.length) {
+  if (!lista.length) {
     tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><i class="fa-solid fa-chart-column"></i><p>Nenhuma venda encontrada neste período.</p></div></td></tr>`;
     return;
   }
-  tbody.innerHTML = vendasRelatorio.map(v => linhaVenda(v, "relatorio", true)).join("");
+  tbody.innerHTML = lista.map(v => linhaVenda(v, "relatorio", true)).join("");
 }
 
 // ── CONFIGURAÇÕES ─────────────────────────────────────────────────────────
