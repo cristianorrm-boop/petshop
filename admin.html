@@ -1096,11 +1096,14 @@ function renderizarPedidos(pedidos) {
         <td style="max-width:260px"><span style="font-size:.8rem;color:var(--muted)">${itensTxt}</span></td>
         <td style="font-weight:700;color:var(--gold)">R$ ${Number(p.total||0).toFixed(2).replace('.',',')}</td>
         <td><span class="badge ${atendido ? "badge-ativo" : "badge-inativo"}">${atendido ? "Atendido" : "Novo"}</span></td>
-        <td>
+        <td><div class="actions-cell">
           <button class="btn btn-ghost btn-sm" onclick="alternarAtendidoPedido('${p.docId}', ${!atendido})" title="${atendido ? "Marcar como novo" : "Marcar como atendido"}">
             <i class="fa-solid ${atendido ? "fa-rotate-left" : "fa-check"}"></i>
           </button>
-        </td>
+          <button class="btn btn-danger btn-sm" onclick="confirmarExclusaoPedido('${p.docId}')" title="Excluir pedido">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </div></td>
       </tr>
     `;
   }).join("");
@@ -1138,6 +1141,19 @@ async function alternarAtendidoPedido(docId, novoValor) {
     await carregarPedidos();
     if (novoValor) await Promise.all([carregarVendasHoje(), carregarRelatorio()]);
   } catch(e) { toast("Erro ao atualizar pedido: " + e.message, "err"); }
+}
+
+function confirmarExclusaoPedido(docId) {
+  document.getElementById("confirm-msg").textContent = "Excluir este pedido? Esta ação não pode ser desfeita. Se ele já tiver gerado uma venda no Relatório, a venda continua existindo — só o pedido some daqui.";
+  document.getElementById("confirm-ok-btn").onclick = async () => {
+    try {
+      await db.collection("pedidos").doc(docId).delete();
+      toast("Pedido excluído.", "ok");
+      fecharModal("confirm-modal");
+      await carregarPedidos();
+    } catch(e) { toast("Erro ao excluir pedido: " + e.message, "err"); }
+  };
+  abrirModal("confirm-modal");
 }
 
 // ── CATEGORIAS ────────────────────────────────────────────────────────────
