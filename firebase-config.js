@@ -1,10 +1,10 @@
 // ─── FIREBASE CONFIG (compartilhado por script.js, admin.html e seed-manejo-mix.html) ──
 const firebaseConfig = {
-  apiKey: "AIzaSyCDPeu2lOrfj7dT_3JTmQELtu8QurHBK4g",
-  authDomain: "pet-shop-25545.firebaseapp.com",
-  projectId: "pet-shop-25545",
-  storageBucket: "pet-shop-25545.firebasestorage.app",
-  messagingSenderId: "102946503043",
-  appId: "1:102946503043:web:fcd28224f4fc9d7de81eb6"
+  apiKey: "AIzaSyAlY_dxgGzb1pqcKRfZeeJr3LCFUDGvoWk",
+  authDomain: "manejomix-930d1.firebaseapp.com",
+  projectId: "manejomix-930d1",
+  storageBucket: "manejomix-930d1.firebasestorage.app",
+  messagingSenderId: "547364408961",
+  appId: "1:547364408961:web:3f0873ae351e19ece90780"
 };
 // ─────────────────────────────────────────────────────────────────────────────
