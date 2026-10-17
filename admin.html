@@ -110,6 +110,12 @@
     .form-group textarea { resize: vertical; min-height: 72px; }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--gold); }
     .form-group select option { background: var(--card); }
+    .animais-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .animal-item { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; }
+    .animal-check { display: flex; align-items: center; gap: 6px; font-size: .85rem; flex: 1; cursor: pointer; }
+    .animal-check input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+    .animal-qtd { width: 56px; padding: 6px 8px !important; text-align: center; }
+    @media (max-width: 600px) { .animais-grid { grid-template-columns: 1fr; } }
     .toggle-row { display: flex; align-items: center; gap: 8px; font-size: .85rem; }
     .toggle-row input[type=checkbox] { accent-color: var(--gold); width: 16px; height: 16px; cursor: pointer; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
@@ -303,7 +309,7 @@
       </div>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Nome</th><th>Telefone</th><th>Aniversário</th><th>Pet</th><th>Qtd. Animais</th><th>Ações</th></tr></thead>
+          <thead><tr><th>Nome</th><th>Telefone</th><th>Aniversário</th><th>Pet</th><th>Animais</th><th>Ações</th></tr></thead>
           <tbody id="clientes-tabela-corpo"><tr><td colspan="6"><div class="loader"><i class="fa-solid fa-spinner"></i> Carregando...</div></td></tr></tbody>
         </table>
       </div>
@@ -664,8 +670,28 @@
       <div class="form-group full"><label>Nome do cliente *</label><input type="text" id="cliente-nome" placeholder="Ex: Maria Silva"></div>
       <div class="form-group"><label>Telefone</label><input type="text" id="cliente-telefone" placeholder="(34) 99999-9999"></div>
       <div class="form-group"><label>Aniversário</label><input type="date" id="cliente-aniversario"></div>
-      <div class="form-group"><label>Nome do pet</label><input type="text" id="cliente-pet" placeholder="Ex: Rex"></div>
-      <div class="form-group"><label>Quantidade de animais</label><input type="number" id="cliente-qtd-animais" min="0" step="1" placeholder="1"></div>
+      <div class="form-group full"><label>Nome do pet</label><input type="text" id="cliente-pet" placeholder="Ex: Rex"></div>
+      <div class="form-group full">
+        <label>Animais de estimação</label>
+        <div class="animais-grid">
+          <div class="animal-item">
+            <label class="animal-check"><input type="checkbox" id="cliente-animal-cachorro" onchange="alternarQtdAnimal('cachorro')"><i class="fa-solid fa-dog"></i> Cachorro</label>
+            <input type="number" id="cliente-qtd-cachorro" class="animal-qtd" min="1" step="1" placeholder="Qtd" disabled>
+          </div>
+          <div class="animal-item">
+            <label class="animal-check"><input type="checkbox" id="cliente-animal-gato" onchange="alternarQtdAnimal('gato')"><i class="fa-solid fa-cat"></i> Gato</label>
+            <input type="number" id="cliente-qtd-gato" class="animal-qtd" min="1" step="1" placeholder="Qtd" disabled>
+          </div>
+          <div class="animal-item">
+            <label class="animal-check"><input type="checkbox" id="cliente-animal-aves" onchange="alternarQtdAnimal('aves')"><i class="fa-solid fa-dove"></i> Aves</label>
+            <input type="number" id="cliente-qtd-aves" class="animal-qtd" min="1" step="1" placeholder="Qtd" disabled>
+          </div>
+          <div class="animal-item">
+            <label class="animal-check"><input type="checkbox" id="cliente-animal-roedores" onchange="alternarQtdAnimal('roedores')"><i class="fa-solid fa-paw"></i> Roedores</label>
+            <input type="number" id="cliente-qtd-roedores" class="animal-qtd" min="1" step="1" placeholder="Qtd" disabled>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharModal('modal-cliente')">Cancelar</button>
@@ -1053,8 +1079,14 @@ async function salvarProduto() {
       toast("Produto atualizado!", "ok");
     } else {
       const maxId = todosProdutos.length ? Math.max(...todosProdutos.map(p => Number(p.id)||0)) : 0;
+      // ordem dentro da própria categoria (não a global), pra um produto novo
+      // ir pro fim DAQUELA categoria na grade, não pro fim do catálogo inteiro
+      const produtosDaCategoria = todosProdutos.filter(p => p.categoria === categoria);
+      const maxOrdemCategoria = produtosDaCategoria.length
+        ? Math.max(...produtosDaCategoria.map(p => p.ordem ?? Number(p.id) ?? 0))
+        : 0;
       await db.collection("produtos").doc(String(maxId + 1)).set({
-        ...dados, id: maxId + 1,
+        ...dados, id: maxId + 1, ordem: maxOrdemCategoria + 1,
         criadoEm: firebase.firestore.FieldValue.serverTimestamp()
       });
       toast("Produto criado!", "ok");
@@ -1517,13 +1549,32 @@ function renderizarClientes() {
       <td>${c.telefone || '–'}</td>
       <td>${aniversarioFmt}</td>
       <td>${c.pet || '–'}</td>
-      <td style="text-align:center">${c.qtdAnimais ?? '–'}</td>
+      <td>${formatarAnimais(c.animais)}</td>
       <td><div class="actions-cell">
         <button class="btn btn-ghost btn-sm" onclick="abrirModalClienteEditar('${c.docId}')"><i class="fa-solid fa-pen"></i></button>
         <button class="btn btn-danger btn-sm" onclick="confirmarExclusao('cliente','${c.docId}','${(c.nome||'').replace(/'/g,"\\'")}')"><i class="fa-solid fa-trash"></i></button>
       </div></td>
     </tr>`;
   }).join("");
+}
+
+const TIPOS_ANIMAL = ["cachorro", "gato", "aves", "roedores"];
+const ICONES_ANIMAL = { cachorro: "fa-dog", gato: "fa-cat", aves: "fa-dove", roedores: "fa-paw" };
+
+function alternarQtdAnimal(tipo) {
+  const chk = document.getElementById(`cliente-animal-${tipo}`);
+  const qtd = document.getElementById(`cliente-qtd-${tipo}`);
+  qtd.disabled = !chk.checked;
+  if (chk.checked) { if (!qtd.value) qtd.value = 1; }
+  else { qtd.value = ""; }
+}
+
+function formatarAnimais(animais) {
+  if (!animais) return '–';
+  const partes = TIPOS_ANIMAL
+    .filter(tipo => animais[tipo] > 0)
+    .map(tipo => `<i class="fa-solid ${ICONES_ANIMAL[tipo]}" title="${tipo}"></i> ${animais[tipo]}`);
+  return partes.length ? partes.join('&nbsp;&nbsp;') : '–';
 }
 
 function abrirModalCliente() {
@@ -1533,7 +1584,11 @@ function abrirModalCliente() {
   document.getElementById("cliente-telefone").value     = "";
   document.getElementById("cliente-aniversario").value  = "";
   document.getElementById("cliente-pet").value           = "";
-  document.getElementById("cliente-qtd-animais").value  = "";
+  TIPOS_ANIMAL.forEach(tipo => {
+    document.getElementById(`cliente-animal-${tipo}`).checked = false;
+    const qtd = document.getElementById(`cliente-qtd-${tipo}`);
+    qtd.value = ""; qtd.disabled = true;
+  });
   abrirModal("modal-cliente");
 }
 
@@ -1546,7 +1601,14 @@ function abrirModalClienteEditar(docId) {
   document.getElementById("cliente-telefone").value     = c.telefone || "";
   document.getElementById("cliente-aniversario").value  = c.aniversario || "";
   document.getElementById("cliente-pet").value           = c.pet || "";
-  document.getElementById("cliente-qtd-animais").value  = c.qtdAnimais ?? "";
+  const animais = c.animais || {};
+  TIPOS_ANIMAL.forEach(tipo => {
+    const temAnimal = animais[tipo] > 0;
+    document.getElementById(`cliente-animal-${tipo}`).checked = temAnimal;
+    const qtd = document.getElementById(`cliente-qtd-${tipo}`);
+    qtd.value = temAnimal ? animais[tipo] : "";
+    qtd.disabled = !temAnimal;
+  });
   abrirModal("modal-cliente");
 }
 
@@ -1556,12 +1618,18 @@ async function salvarCliente() {
   const telefone   = document.getElementById("cliente-telefone").value.trim();
   const aniversario = document.getElementById("cliente-aniversario").value || null;
   const pet        = document.getElementById("cliente-pet").value.trim();
-  const qtdRaw     = document.getElementById("cliente-qtd-animais").value;
-  const qtdAnimais = qtdRaw ? parseInt(qtdRaw, 10) : null;
 
   if (!nome) { toast("Preencha o nome do cliente.", "err"); return; }
 
-  const dados = { nome, telefone: telefone || null, aniversario, pet: pet || null, qtdAnimais };
+  const animais = {};
+  TIPOS_ANIMAL.forEach(tipo => {
+    if (document.getElementById(`cliente-animal-${tipo}`).checked) {
+      const qtd = parseInt(document.getElementById(`cliente-qtd-${tipo}`).value, 10);
+      animais[tipo] = qtd > 0 ? qtd : 1;
+    }
+  });
+
+  const dados = { nome, telefone: telefone || null, aniversario, pet: pet || null, animais };
   try {
     if (docId) {
       await db.collection("clientes").doc(docId).update(dados);

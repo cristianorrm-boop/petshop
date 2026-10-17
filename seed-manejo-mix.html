@@ -57,6 +57,24 @@ const categorias = [
 // catálogos — vai crescendo conforme as categorias chegam.
 const produtos = [
   // ── RAÇÕES ───────────────────────────────────────────────────────────────
+  // Fórmula Natural: ids 35-37 (fora da sequência 1-34, pra não colidir com
+  // nenhum id existente) + ordem baixa (0.1/0.2/0.3), pra aparecerem nas
+  // primeiras posições de Rações sem precisar renumerar o restante.
+  {
+    id: 35, categoria: "racoes", ordem: 0.1, nome: "Fórmula Natural Pro Cão Adulto Médio e Grande 15kg", preco: 198.00,
+    imagem: "./assets/natural-pro-cao-adulto.webp",
+    descricao: "Ração seca para cães adultos de porte médio e grande, sabor frango e batata doce — contribui para a saúde bucal, reduzindo o acúmulo de tártaro. Pacote de 15kg.",
+  },
+  {
+    id: 36, categoria: "racoes", ordem: 0.2, nome: "Fórmula Natural Super Premium Life Cães Mini e Pequena Frango 15kg", preco: 212.00,
+    imagem: "./assets/natural-super-premium-life.webp",
+    descricao: "Ração seca super premium para cães adultos de raças mini e pequena, sabor frango. Pacote de 15kg.",
+  },
+  {
+    id: 37, categoria: "racoes", ordem: 0.3, nome: "Fórmula Natural Super Premium Cães Médios/Grandes Mix 15kg", preco: 299.99,
+    imagem: "./assets/natural-super-premium.webp",
+    descricao: "Ração seca super premium para cães adultos de raças médias e grandes, sabor mix — ajuda a prevenir tártaro e placa dentária, com armazenamento prolongado sem deterioração. Pacote de 15kg.",
+  },
   {
     id: 1, categoria: "racoes", nome: "Origens Class Premium Cães Carne e Frango 15kg", preco: 155.19,
     imagem: "./assets/origens-class-premium2.jpeg",

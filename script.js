@@ -81,7 +81,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         const pa = posicaoCategoriaPorId[a.categoria] ?? 9999;
         const pb = posicaoCategoriaPorId[b.categoria] ?? 9999;
         if (pa !== pb) return pa - pb;
-        return (Number(a.id) || 0) - (Number(b.id) || 0);
+        const oa = a.ordem ?? Number(a.id) ?? 0;
+        const ob = b.ordem ?? Number(b.id) ?? 0;
+        return oa - ob;
     });
 
     const renderizarCategoriasBar = () => {
