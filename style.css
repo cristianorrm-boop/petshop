@@ -454,6 +454,17 @@ footer{
 .whatsapp-float:hover{transform:scale(1.06)}
 @media (min-width:769px){.whatsapp-float{right:2rem;bottom:2rem}}
 
+/* --- CONFIRMAÇÃO DE PEDIDO ENVIADO --- */
+.pedido-toast{
+  position:fixed;left:50%;bottom:1.5rem;transform:translate(-50%,120%);
+  background:var(--success-color);color:#fff;padding:.9rem 1.3rem;border-radius:10px;
+  display:flex;align-items:center;gap:.6rem;font-size:.92rem;font-weight:600;
+  box-shadow:0 10px 24px rgba(0,0,0,.35);z-index:990;max-width:90vw;text-align:center;
+  transition:transform .3s ease;
+}
+.pedido-toast.show{transform:translate(-50%,0);}
+.pedido-toast i{font-size:1.2rem}
+
 /* --- MEDIA QUERIES --- */
 @media (min-width:640px){
   .products-container{grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1.5rem;}

@@ -215,6 +215,22 @@ document.addEventListener("DOMContentLoaded", async () => {
         unlockScroll();
     };
 
+    // Feedback visual de "pedido enviado", pra quem finaliza pelo celular
+    // (onde o WhatsApp abre em outro app) saber que deu certo mesmo sem
+    // acompanhar a aba/app que abriu.
+    const mostrarPedidoToast = () => {
+        let toastEl = document.querySelector(".pedido-toast");
+        if (!toastEl) {
+            toastEl = document.createElement("div");
+            toastEl.className = "pedido-toast";
+            toastEl.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>Pedido enviado! Abrindo o WhatsApp...</span>`;
+            document.body.appendChild(toastEl);
+        }
+        requestAnimationFrame(() => toastEl.classList.add("show"));
+        clearTimeout(toastEl._timeout);
+        toastEl._timeout = setTimeout(() => toastEl.classList.remove("show"), 4000);
+    };
+
     const animacaoVoarParaCarrinho = (productCard) => {
         const productImg = productCard.querySelector(".product-img"),
             imgRect = productImg.getBoundingClientRect(),
@@ -590,6 +606,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
         }
 
+        // Abre a aba do WhatsApp JÁ AGORA (ainda em branco), antes de qualquer
+        // "await" — no celular, se o window.open vier depois de um await, o
+        // navegador não reconhece mais como ação direta do clique e bloqueia
+        // o pop-up silenciosamente (parecia que "não acontecia nada").
+        const abaWhatsApp = window.open("", "_blank");
+
         const numeroWhatsApp = configLoja.whatsapp;
         const itensPedido = carrinho
             .map((item) => ` - ${item.quantidade}x ${item.nome}${item.variacaoEscolhida ? ` (${item.variacaoEscolhida})` : ""}`)
@@ -658,7 +680,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
-        window.open(url, "_blank");
+        if (abaWhatsApp) {
+            abaWhatsApp.location.href = url;
+        } else {
+            // navegador bloqueou mesmo assim (raro) — tenta de novo
+            window.open(url, "_blank");
+        }
+
+        mostrarPedidoToast();
+        carrinho = [];
+        appliedCoupon = null;
+        atualizarCarrinho();
+        fecharCarrinho();
     };
 
     // --- EVENT LISTENERS ---
