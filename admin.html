@@ -11,8 +11,8 @@
       --surface: #f2f6fa;
       --card:    #ffffff;
       --border:  #e1e8ef;
-      --gold:    #0d47a1;
-      --gold2:   #1565c0;
+      --gold:    #4A0E0E;
+      --gold2:   #6b1f1f;
       --text:    #182236;
       --muted:   #64748b;
       --red:     #f44336;
@@ -39,7 +39,7 @@
     .side-btn { display: flex; align-items: center; gap: 12px; text-align: left; background: none; border: none; color: var(--muted); padding: 12px 14px; border-radius: 8px; cursor: pointer; font-size: .88rem; transition: .2s; width: 100%; }
     .side-btn i { width: 18px; text-align: center; font-size: .95rem; }
     .side-btn:hover { background: var(--card); color: var(--text); }
-    .side-btn.active { background: #e3f0fb; color: var(--gold); font-weight: 600; }
+    .side-btn.active { background: #f7e9dc; color: var(--gold); font-weight: 600; }
     .content { padding: 24px; flex: 1; min-width: 0; }
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
@@ -93,7 +93,7 @@
     .badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: .72rem; font-weight: 600; }
     .badge-ativo    { background: #e3f6e8; color: var(--green); }
     .badge-inativo  { background: #fdecea; color: var(--red); }
-    .badge-destaque { background: #e3f0fb; color: var(--gold); }
+    .badge-destaque { background: #f7e9dc; color: var(--gold); }
     .actions-cell { display: flex; gap: 6px; }
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 200; align-items: center; justify-content: center; }
     .modal-overlay.show { display: flex; }
@@ -1885,7 +1885,7 @@ function linhaVenda(v, origem, comData) {
   // Mostra se a venda veio de um pedido online (entrega/retirada) ou se foi
   // batida direto no PDV da loja (quando não tem pedidoOrigem).
   const origemBadge = v.pedidoOrigem
-    ? `<span class="badge" style="background:#e3f0fb;color:var(--gold);margin-left:6px">Online · ${v.pedidoOrigem.origem === "delivery" ? "Entrega" : "Retirada"}</span>`
+    ? `<span class="badge" style="background:#f7e9dc;color:var(--gold);margin-left:6px">Online · ${v.pedidoOrigem.origem === "delivery" ? "Entrega" : "Retirada"}</span>`
     : '';
   return `
     <tr>
