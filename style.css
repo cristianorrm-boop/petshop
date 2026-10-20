@@ -288,7 +288,7 @@ header{
 .cart-header h3{font-size:1.6rem; color:var(--text-color);}
 .close-cart-btn{background:none; border:none; font-size:2rem; cursor:pointer; color:var(--primary-color);}
 
-.cart-body{padding:1.5rem; overflow-y:auto; flex-shrink:1;}
+.cart-body{padding:1.5rem; overflow-y:auto; flex:1 1 auto; min-height:0;}
 .cart-footer{
   padding:1.5rem; border-top:1px solid var(--border-color);
   background:var(--bg-soft); overflow-y:auto; flex-grow:1;
@@ -297,7 +297,29 @@ header{
 .finish-order-btn-container{
   padding:1rem 1.5rem; border-top:1px solid var(--border-color);
   background:var(--secondary-color); box-shadow:0 -2px 5px rgba(0,0,0,.2);
+  display:flex; gap:.7rem;
 }
+
+/* --- CARRINHO EM DUAS ETAPAS (1. Carrinho / 2. Dados e Pagamento) --- */
+.cart-step-indicator{
+  display:flex; align-items:center; justify-content:center; gap:.6rem;
+  padding:.7rem 1.5rem; border-bottom:1px solid var(--border-color);
+  background:var(--bg-soft); font-size:.78rem; color:var(--text-muted);
+}
+.cart-step-indicator .step{display:flex; align-items:center; gap:.4rem; opacity:.5; transition:opacity .2s, color .2s;}
+.cart-step-indicator .step.active{opacity:1; color:var(--primary-color); font-weight:700;}
+.cart-step-indicator .step-sep{opacity:.35; font-size:.7rem;}
+.cart-step{display:flex; flex-direction:column; flex:1 1 auto; min-height:0; overflow:hidden;}
+.cart-step1-resumo{padding:1rem 1.5rem 0; border-top:1px solid var(--border-color);}
+.cart-step1-resumo .summary-line{display:flex; justify-content:space-between; margin-bottom:.4rem; font-size:.95rem; color:var(--text-muted);}
+.cart-step1-resumo .summary-line.total{font-size:1.2rem; font-weight:800; color:var(--text-color);}
+.cart-step1-resumo .summary-line.total span:last-child{color:var(--primary-color);}
+.btn-voltar-carrinho{
+  flex:0 0 auto; padding:1rem 1.1rem; font-size:1rem; font-weight:700;
+  background:transparent; color:var(--text-color); border:1px solid var(--border-color); border-radius:.5rem; cursor:pointer;
+  transition:border-color .2s, color .2s;
+}
+.btn-voltar-carrinho:hover{border-color:var(--primary-color); color:var(--primary-color);}
 
 .cart-empty{text-align:center; padding-top:4rem; color:var(--text-muted);}
 .cart-empty i{font-size:4rem; margin-bottom:1rem; color:var(--border-color);}
@@ -402,7 +424,7 @@ header{
 #apply-coupon-btn:hover{background:var(--primary-color); color:#0a0f18;}
 
 .finish-order-btn{
-  width:100%; padding:1rem; font-size:1.2rem; font-weight:800;
+  flex:1; padding:1rem; font-size:1.2rem; font-weight:800;
   background:var(--primary-color); color:#0a0f18; border:none; border-radius:.5rem; cursor:pointer;
   transition:filter .2s, transform .1s;
 }
