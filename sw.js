@@ -1,10 +1,10 @@
-const CACHE_NAME = "manejo-mix-shell-v1";
+const CACHE_NAME = "manejo-mix-shell-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./style.css",
-  "./script.js",
-  "./firebase-config.js",
+  "./style.css?v=20261020",
+  "./script.js?v=20261020",
+  "./firebase-config.js?v=20261020",
   "./manifest.json",
 ];
 

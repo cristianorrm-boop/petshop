@@ -1,7 +1,7 @@
-const CACHE_NAME = "manejo-mix-admin-shell-v1";
+const CACHE_NAME = "manejo-mix-admin-shell-v2";
 const APP_SHELL = [
   "./admin.html",
-  "./firebase-config.js",
+  "./firebase-config.js?v=20261020",
   "./manifest-admin.json",
 ];
 
