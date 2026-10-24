@@ -1,0 +1,18 @@
+# Reduz o cache de imagens de produto pra 1 dia (o padrão do Hostinger pra
+# arquivos estáticos é 7 dias). Fotos de produto mudam com frequência nesse
+# catálogo — sem isso, trocar uma foto salvando com o mesmo nome de arquivo
+# podia continuar aparecendo "borrada" pra quem já visitou o site antes,
+# por até 7 dias, mesmo com o arquivo novo já no ar.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/jpeg "access plus 1 day"
+  ExpiresByType image/png "access plus 1 day"
+  ExpiresByType image/webp "access plus 1 day"
+  ExpiresByType image/gif "access plus 1 day"
+  ExpiresByType image/svg+xml "access plus 1 day"
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(jpg|jpeg|png|webp|gif|svg)$">
+    Header set Cache-Control "public, max-age=86400"
+  </FilesMatch>
+</IfModule>
