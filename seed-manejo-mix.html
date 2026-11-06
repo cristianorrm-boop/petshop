@@ -306,6 +306,29 @@ const produtos = [
     descricao: "Alimento super premium, livre de transgênicos, com conservantes naturais — auxilia na saúde cognitiva, visual, do rim, coração, pele e pelagem.",
   },
 
+  // ── RAÇÃO CÃO (Quatree Life/Select, continuação da Quatree) ────────────────
+  // ids 108-111, ordem 33-36 (entra depois do Quatree Supreme, antes do Origens).
+  {
+    id: 108, categoria: "racoes", ordem: 33, nome: "Quatree Life RP Frango 20kg", preco: 313.63,
+    imagem: "./assets/quatree-life-rp-frango-20kg.jpg",
+    descricao: "Com antioxidantes naturais, beta-glucano e prebióticos para fortalecer as defesas, além de ômegas 3 e 6, biotina e zinco quelatado para pele e pelagem saudáveis.",
+  },
+  {
+    id: 109, categoria: "racoes", ordem: 34, nome: "Quatree Life RP Frango 15kg", preco: 263.15,
+    imagem: "./assets/quatree-life-rp-frango-15kg.webp",
+    descricao: "Ração completa sabor frango e arroz, formulada para cobrir as necessidades nutricionais e energéticas do cão.",
+  },
+  {
+    id: 110, categoria: "racoes", ordem: 35, nome: "Quatree Life RP Frango 10kg", preco: 183.90,
+    imagem: "./assets/quatree-life-rp-frango-10kg.webp",
+    descricao: "Para cães adultos de pequeno porte, com glicosamina e condroitina para as articulações, betaglucanas e ômegas 3 e 6 para pele e pelagem saudáveis.",
+  },
+  {
+    id: 111, categoria: "racoes", ordem: 36, nome: "Quatree Select Sênior RP Frango 10kg", preco: 199.90,
+    imagem: "./assets/quatree-select-senior-rp-frango-10kg.webp",
+    descricao: "Sabor frango e arroz, desenvolvida para cães idosos (7+) de raças pequenas, com grão de fácil mastigação e digestão.",
+  },
+
   // ── RAÇÃO GATO (Quatree Supreme) ─────────────────────────────────────────────
   // ids 83-87, ordem 13-17.
   {
@@ -334,108 +357,141 @@ const produtos = [
     descricao: "Sabor salmão, frango, linhaça e chá verde — para gatos castrados sêniores.",
   },
 
-  // ── RAÇÃO CÃO (Origens, 4ª marca real da loja) ──────────────────────────────
-  // ids 88-102, ordem 33-47 (continua depois do Quatree dentro de "racoes").
+  // ── RAÇÃO GATO (Quatree Life/Select/Gourmet, continuação da Quatree) ───────
+  // ids 112-117, ordem 18-23 (entra depois do Quatree Supreme, antes do Origens).
   {
-    id: 88, categoria: "racoes", ordem: 33, nome: "Origens Class Ad 10kg", preco: 119.90,
+    id: 112, categoria: "racao-gato", ordem: 18, nome: "Quatree Life Cat Cast Frango 20kg", preco: 379.99,
+    imagem: "./assets/quatree-life-cat-cast-frango-20kg.jpg",
+    descricao: "Equilíbrio do pH urinário, mix de proteínas e legumes para saciedade, ômegas 3 e 6 e batata-doce para pele e pelagem — gatos castrados.",
+  },
+  {
+    id: 113, categoria: "racao-gato", ordem: 19, nome: "Quatree Life Cat Cast Frango 10kg", preco: 199.90,
+    imagem: "./assets/quatree-life-cat-cast-frango-10kg.webp",
+    descricao: "Sabor frango e arroz, alimento seco recomendado para gatos adultos castrados.",
+  },
+  {
+    id: 114, categoria: "racao-gato", ordem: 20, nome: "Quatree Select Cat Cast Frango 10kg", preco: 184.99,
+    imagem: "./assets/quatree-select-cat-cast-frango-10kg.jpg",
+    descricao: "Alimento premium com ingredientes naturais, carboidratos de fácil digestão e proteínas de alto valor biológico — gatos castrados.",
+  },
+  {
+    id: 115, categoria: "racao-gato", ordem: 21, nome: "Quatree Gourmet Mix Cast 20kg", preco: 365.90,
+    imagem: "./assets/quatree-gourmet-mix-cast-20kg.webp",
+    descricao: "Sabor mix de carnes, com fórmula indoor que ajuda no controle de peso, bolas de pelo e saúde do trato urinário — gatos castrados.",
+  },
+  {
+    id: 116, categoria: "racao-gato", ordem: 22, nome: "Quatree Gourmet Mix Cast 10kg", preco: 180.00,
+    imagem: "./assets/quatree-gourmet-mix-cast-10kg.webp",
+    descricao: "Sabor peixe, carne e frango, indicada para gatos adultos com tendência à obesidade.",
+  },
+  {
+    id: 117, categoria: "racao-gato", ordem: 23, nome: "Quatree Gourmet Cast Delicias do Mar 20kg", preco: 292.99,
+    imagem: "./assets/quatree-gourmet-cast-delicias-mar-20kg.jpg",
+    descricao: "Sabor peixe, rica em proteína de alta qualidade e ômegas 3 e 6, com bom balanceamento de minerais para a saúde do trato urinário.",
+  },
+
+  // ── RAÇÃO CÃO (Origens, 4ª marca real da loja) ──────────────────────────────
+  // ids 88-102, ordem 37-51 (continua depois do Quatree dentro de "racoes").
+  {
+    id: 88, categoria: "racoes", ordem: 37, nome: "Origens Class Ad 10kg", preco: 119.90,
     imagem: "./assets/origens-class-ad-10kg.png",
     descricao: "Ração premium para cães adultos com Ômegas 3 e 6, biotina e zinco quelato — calorias reduzidas e pelagem com mais brilho.",
   },
   {
-    id: 89, categoria: "racoes", ordem: 34, nome: "Origens Class Ad 15kg", preco: 139.41,
+    id: 89, categoria: "racoes", ordem: 38, nome: "Origens Class Ad 15kg", preco: 139.41,
     imagem: "./assets/origens-class-ad-15kg.webp",
     descricao: "Ração premium para cães adultos, com carne e frango como fontes de proteína — auxilia na pelagem saudável e brilhante.",
   },
   {
-    id: 90, categoria: "racoes", ordem: 35, nome: "Origens Class Ad 20kg", preco: 179.91,
+    id: 90, categoria: "racoes", ordem: 39, nome: "Origens Class Ad 20kg", preco: 179.91,
     imagem: "./assets/origens-class-ad-20kg.webp",
     descricao: "Ração premium para cães adultos, com carne e frango como fontes de proteína — fórmula balanceada com vitaminas e minerais essenciais.",
   },
   {
-    id: 91, categoria: "racoes", ordem: 36, nome: "Origens Frango Ad RP 15kg", preco: 185.90,
+    id: 91, categoria: "racoes", ordem: 40, nome: "Origens Frango Ad RP 15kg", preco: 185.90,
     imagem: "./assets/origens-frango-ad-rp-15kg.webp",
     descricao: "Ração sabor frango para cães adultos de raças pequenas.",
   },
   {
-    id: 92, categoria: "racoes", ordem: 37, nome: "Origens Carne Ad RP 10kg", preco: 146.90,
+    id: 92, categoria: "racoes", ordem: 41, nome: "Origens Carne Ad RP 10kg", preco: 146.90,
     imagem: "./assets/origens-carne-ad-rp-10kg.webp",
     descricao: "Linha premium especial sabor carne, para cães adultos de raças pequenas.",
   },
   {
-    id: 93, categoria: "racoes", ordem: 38, nome: "Origens Carne Ad RP 15kg", preco: 251.90,
+    id: 93, categoria: "racoes", ordem: 42, nome: "Origens Carne Ad RP 15kg", preco: 251.90,
     imagem: "./assets/origens-carne-ad-rp-15kg.webp",
     descricao: "Sabor carne e cereais, partículas menores de fácil mastigação, com Ômegas 3 e 6, biotina e zinco quelato — cães adultos de porte pequeno.",
   },
   {
-    id: 94, categoria: "racoes", ordem: 39, nome: "Origens Sênior RP 10kg", preco: 187.99,
+    id: 94, categoria: "racoes", ordem: 43, nome: "Origens Sênior RP 10kg", preco: 187.99,
     imagem: "./assets/origens-senior-rp-10kg.webp",
     descricao: "Ração para cães sêniores de porte mini e pequeno, embalagem de 10,1kg.",
   },
   {
-    id: 95, categoria: "racoes", ordem: 40, nome: "Origens Senior RG 15kg", preco: 184.90,
+    id: 95, categoria: "racoes", ordem: 44, nome: "Origens Senior RG 15kg", preco: 184.90,
     imagem: "./assets/origens-senior-rg-15kg.webp",
     descricao: "Sabor frango/cereais, rica em proteína animal e minerais essenciais — para cães sêniores de porte médio e grande.",
   },
   {
-    id: 96, categoria: "racoes", ordem: 41, nome: "Origens Energy Ad RG15kg", preco: 225.90,
+    id: 96, categoria: "racoes", ordem: 45, nome: "Origens Energy Ad RG15kg", preco: 225.90,
     imagem: "./assets/origens-energy-ad-rg-15kg.webp",
     descricao: "Alta performance para cães adultos com atividade física intensa — rica em proteína, L-Carnitina e BCAA, com condroitina e glucosamina.",
   },
   {
-    id: 97, categoria: "racoes", ordem: 42, nome: "Origens Energy Fil 15kg", preco: 222.90,
+    id: 97, categoria: "racoes", ordem: 46, nome: "Origens Energy Fil 15kg", preco: 222.90,
     imagem: "./assets/origens-energy-fil-15kg.webp",
     descricao: "Alta performance para cães filhotes em desenvolvimento — rica em proteína e energia, com aminoácidos que auxiliam na síntese muscular.",
   },
   {
-    id: 98, categoria: "racoes", ordem: 43, nome: "Origens Natural Fil RP Frango 10kg", preco: 170.99,
+    id: 98, categoria: "racoes", ordem: 47, nome: "Origens Natural Fil RP Frango 10kg", preco: 170.99,
     imagem: "./assets/origens-natural-fil-rp-frango-10kg.webp",
     descricao: "Sabor frango para filhotes de raças pequenas, cobre as necessidades nutricionais e energéticas do crescimento.",
   },
   {
-    id: 99, categoria: "racoes", ordem: 44, nome: "Origens Natural Sênior 7+ 1kg", preco: 32.90,
+    id: 99, categoria: "racoes", ordem: 48, nome: "Origens Natural Sênior 7+ 1kg", preco: 32.90,
     imagem: "./assets/origens-natural-senior-7mais-1kg.webp",
     descricao: "Com antioxidantes naturais e ingredientes livres de transgênicos — promove a saúde digestiva e a vitalidade de cães sêniores de raças médias e grandes.",
   },
   {
-    id: 100, categoria: "racoes", ordem: 45, nome: "Origens Natural Ad RG 12kg", preco: 151.99,
+    id: 100, categoria: "racoes", ordem: 49, nome: "Origens Natural Ad RG 12kg", preco: 151.99,
     imagem: "./assets/origens-natural-ad-rg-12kg.webp",
     descricao: "Sabor ovelha e arroz, livre de grãos transgênicos, sem corantes nem aromatizantes artificiais — cães adultos de médio e grande porte.",
   },
   {
-    id: 101, categoria: "racoes", ordem: 46, nome: "Origens Natural Ad Ovelha e Arroz RP 10kg", preco: 185.36,
+    id: 101, categoria: "racoes", ordem: 50, nome: "Origens Natural Ad Ovelha e Arroz RP 10kg", preco: 185.36,
     imagem: "./assets/origens-natural-ad-ovelha-arroz-rp-10kg.webp",
     descricao: "Sabor ovelha, protetora da saúde bucal — cães adultos de raças pequenas.",
   },
   {
-    id: 102, categoria: "racoes", ordem: 47, nome: "Origens Natural Fil Ovelha e Arroz 10kg", preco: 170.99,
+    id: 102, categoria: "racoes", ordem: 51, nome: "Origens Natural Fil Ovelha e Arroz 10kg", preco: 170.99,
     imagem: "./assets/origens-natural-fil-ovelha-arroz-10kg.webp",
     descricao: "Sabor ovelha e arroz, auxilia no desenvolvimento do cérebro e da visão, com suporte articular e às defesas naturais — filhotes.",
   },
 
   // ── RAÇÃO GATO (Origens) ─────────────────────────────────────────────────────
-  // ids 103-107, ordem 18-22 (continua depois do Quatree dentro de "racao-gato").
+  // ids 103-107, ordem 24-28 (continua depois do Quatree dentro de "racao-gato").
   {
-    id: 103, categoria: "racao-gato", ordem: 18, nome: "Origens Cat Carne 10kg", preco: 200.64,
+    id: 103, categoria: "racao-gato", ordem: 24, nome: "Origens Cat Carne 10kg", preco: 200.64,
     imagem: "./assets/origens-cat-carne-10kg.webp",
     descricao: "Com taurina e proteína de alta qualidade, equilíbrio do pH urinário e extrato de yucca — gatos adultos sabor carne.",
   },
   {
-    id: 104, categoria: "racao-gato", ordem: 19, nome: "Origens Cat Cast Carne 10kg", preco: 199.99,
+    id: 104, categoria: "racao-gato", ordem: 25, nome: "Origens Cat Cast Carne 10kg", preco: 199.99,
     imagem: "./assets/origens-cat-cast-carne-10kg.webp",
     descricao: "Para gatos castrados adultos, com prebióticos e fibras para a saúde intestinal, Ômegas 3 e 6 e calorias reduzidas.",
   },
   {
-    id: 105, categoria: "racao-gato", ordem: 20, nome: "Origens Cat Cast Frango 10kg", preco: 166.99,
+    id: 105, categoria: "racao-gato", ordem: 26, nome: "Origens Cat Cast Frango 10kg", preco: 166.99,
     imagem: "./assets/origens-cat-cast-frango-10kg.webp",
     descricao: "Sabor salmão e frango, fórmula completa desenvolvida para gatos castrados.",
   },
   {
-    id: 106, categoria: "racao-gato", ordem: 21, nome: "Origens Cat Cast Salmão 10kg", preco: 166.99,
+    id: 106, categoria: "racao-gato", ordem: 27, nome: "Origens Cat Cast Salmão 10kg", preco: 166.99,
     imagem: "./assets/origens-cat-cast-salmao-10kg.webp",
     descricao: "Sabor salmão, para gatos adultos castrados de todos os tamanhos.",
   },
   {
-    id: 107, categoria: "racao-gato", ordem: 22, nome: "Origens Cat Fil Carne e Frango 10kg", preco: 199.99,
+    id: 107, categoria: "racao-gato", ordem: 28, nome: "Origens Cat Fil Carne e Frango 10kg", preco: 199.99,
     imagem: "./assets/origens-cat-fil-carne-frango-10kg.webp",
     descricao: "Sabor frango e cereais, mantém o equilíbrio do pH urinário, rico em vitaminas e Ômega 3 e 6 — gatos filhotes.",
   },
