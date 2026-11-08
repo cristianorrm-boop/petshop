@@ -726,7 +726,9 @@ const produtos = [
   },
 
   // ── RAÇÃO AVES (Mega Zoo, Pássaro Forte, Megatrato, Biotron) ────────────────
-  // ids 161-167, ordem 1-7 (categoria nova, pedida pela cliente).
+  // ids 161-167 e 173, ordem 1-8 (categoria nova, pedida pela cliente). O id 173
+  // (ordem 4) é a "Megatrato Extrusado Frutas Vermelhas 300g" — na verdade é a
+  // foto de outra marca (NuTrópica), a cliente vai corrigir/editar depois.
   {
     id: 161, categoria: "racao-aves", ordem: 1, nome: "Mega Zoo Extrusado Papagaio 900g", preco: 99.90,
     imagem: "./assets/mega-zoo-extrusado-papagaio-900g.jpg",
@@ -743,22 +745,27 @@ const produtos = [
     descricao: "Alimento essencial para a sua ave, embalagem de 300g.",
   },
   {
-    id: 164, categoria: "racao-aves", ordem: 4, nome: "Pássaro Forte Papa para Filhotes 350g", preco: 42.99,
+    id: 173, categoria: "racao-aves", ordem: 4, nome: "Megatrato Extrusado Frutas Vermelhas 300g", preco: 48.99,
+    imagem: "./assets/megatrato-extrusado-frutas-vermelhas-300g.webp",
+    descricao: "Alimento extrusado com frutas, formulado especialmente para calopsitas, garantindo uma dieta balanceada e saborosa com todos os nutrientes necessários.",
+  },
+  {
+    id: 164, categoria: "racao-aves", ordem: 5, nome: "Pássaro Forte Papa para Filhotes 350g", preco: 42.99,
     imagem: "./assets/passaro-forte-papa-filhotes-350g.webp",
     descricao: "Rico em vitaminas e minerais, alimento completo responsável pelo desenvolvimento de pássaros filhotes.",
   },
   {
-    id: 165, categoria: "racao-aves", ordem: 5, nome: "Megatrato Papa 400g", preco: 23.80,
+    id: 165, categoria: "racao-aves", ordem: 6, nome: "Megatrato Papa 400g", preco: 23.80,
     imagem: "./assets/megatrato-papa-400g.webp",
     descricao: "Alimentação saudável e nutritiva para filhotes de psitacídeos, com combinação equilibrada de nutrientes essenciais para um crescimento vigoroso.",
   },
   {
-    id: 166, categoria: "racao-aves", ordem: 6, nome: "Biotron CC2030 1kg", preco: 34.00,
+    id: 166, categoria: "racao-aves", ordem: 7, nome: "Biotron CC2030 1kg", preco: 34.00,
     imagem: "./assets/biotron-cc2030-1kg.webp",
     descricao: "Nutrição completa para aves ornamentais jovens, com todos os nutrientes necessários para o equilíbrio da flora intestinal e o pleno desenvolvimento do potencial genético. Isento de pigmentos.",
   },
   {
-    id: 167, categoria: "racao-aves", ordem: 7, nome: "Bastão Calopsita com Coco 70g (2 Unid)", preco: 18.99,
+    id: 167, categoria: "racao-aves", ordem: 8, nome: "Bastão Calopsita com Coco 70g (2 Unid)", preco: 18.99,
     imagem: "./assets/bastao-calopsita-coco-70g.webp",
     descricao: "Alimento completo formulado com sementes selecionadas, que imita a obtenção de alimentos na natureza.",
   },
