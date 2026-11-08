@@ -56,6 +56,8 @@ const categorias = [
   { id: "petiscos",        nome: "Petiscos",        icone: "fa-cookie-bite", ordem: 5 },
   { id: "acessorios",      nome: "Acessórios",      icone: "fa-bag-shopping", ordem: 6 },
   { id: "vestuario",       nome: "Vestuário",        icone: "fa-shirt",       ordem: 7 },
+  { id: "racao-aves",      nome: "Ração Aves",       icone: "fa-dove",        ordem: 8 },
+  { id: "racao-roedores",  nome: "Ração Roedores",   icone: "fa-hamster",     ordem: 9 },
 ];
 
 // Produtos antigos (demonstração + Fórmula Natural que não batiam com a loja
@@ -531,6 +533,69 @@ const produtos = [
     descricao: "22% de proteína para manter a massa muscular, com ômegas e zinco orgânico para pele e pelagem — cães adultos de porte médio e grande.",
   },
 
+  // ── RAÇÃO CÃO (Magnus, Capitão Dog, Megatrato — Adimax) ─────────────────────
+  // ids 136-147, ordem 64-75.
+  {
+    id: 136, categoria: "racoes", ordem: 64, nome: "Magnus Supreme Fil 15kg", preco: 208.89,
+    imagem: "./assets/magnus-supreme-fil-15kg.jpg",
+    descricao: "Ômegas 3 e 6, biotina e zinco quelato para pele e pelagem, fórmula enriquecida com vitaminas e minerais de alta absorção — cães filhotes.",
+  },
+  {
+    id: 137, categoria: "racoes", ordem: 65, nome: "Magnus Td Fil 20kg", preco: 193.99,
+    imagem: "./assets/magnus-td-fil-20kg.webp",
+    descricao: "Alimento completo sabor carne para cães filhotes em fase de crescimento, com proteína de alta qualidade, prebióticos, Yucca e 23 vitaminas e minerais.",
+  },
+  {
+    id: 138, categoria: "racoes", ordem: 66, nome: "Magnus Td Fil 10kg", preco: 102.90,
+    imagem: "./assets/magnus-td-fil-10kg.jpg",
+    descricao: "Alimento completo sabor carne para cães filhotes em fase de crescimento, com proteína de alta qualidade, prebióticos, Yucca e 23 vitaminas e minerais.",
+  },
+  {
+    id: 139, categoria: "racoes", ordem: 67, nome: "Magnus Td 20kg", preco: 162.90,
+    imagem: "./assets/magnus-td-20kg.webp",
+    descricao: "Alimento seco sabor carne, especialmente formulado para cães adultos de raça média e grande.",
+  },
+  {
+    id: 140, categoria: "racoes", ordem: 68, nome: "Magnus Td 15kg", preco: 120.90,
+    imagem: "./assets/magnus-td-15kg.webp",
+    descricao: "Alimento seco sabor carne, especialmente formulado para cães adultos de raça média e grande.",
+  },
+  {
+    id: 141, categoria: "racoes", ordem: 69, nome: "Magnus Td 10kg", preco: 75.00,
+    imagem: "./assets/magnus-td-10kg.webp",
+    descricao: "Alimento seco sabor carne, especialmente formulado para cães adultos de raça média e grande.",
+  },
+  {
+    id: 142, categoria: "racoes", ordem: 70, nome: "Magnus Td RP 20kg", preco: 214.49,
+    imagem: "./assets/magnus-td-rp-20kg.webp",
+    descricao: "Sabor carne, protetor da saúde bucal — cães adultos.",
+  },
+  {
+    id: 143, categoria: "racoes", ordem: 71, nome: "Magnus Td RP 15kg", preco: 135.99,
+    imagem: "./assets/magnus-td-rp-15kg.webp",
+    descricao: "Sabor carne, protetor da saúde bucal — cães adultos.",
+  },
+  {
+    id: 144, categoria: "racoes", ordem: 72, nome: "Magnus Td RP 10kg", preco: 75.00,
+    imagem: "./assets/magnus-td-rp-10kg.webp",
+    descricao: "Sabor carne, protetor da saúde bucal — cães adultos.",
+  },
+  {
+    id: 145, categoria: "racoes", ordem: 73, nome: "Capitão Dog 20kg", preco: 154.19,
+    imagem: "./assets/capitao-dog-20kg.webp",
+    descricao: "Sabor carne, com 17% de proteína bruta para nutrição equilibrada e minerais essenciais como cálcio e fósforo — cães adultos.",
+  },
+  {
+    id: 146, categoria: "racoes", ordem: 74, nome: "Capitão Dog 14kg", preco: 86.49,
+    imagem: "./assets/capitao-dog-14kg.webp",
+    descricao: "Alimento completo e balanceado, com ingredientes selecionados, vitaminas e minerais essenciais para a saúde e bem-estar de cães adultos.",
+  },
+  {
+    id: 147, categoria: "racoes", ordem: 75, nome: "Megatrato Dog 15kg", preco: 83.90,
+    imagem: "./assets/megatrato-dog-15kg.webp",
+    descricao: "Linha premium, com croquetes para a saúde oral, condroprotetores para as articulações e prebióticos/fibras para a saúde intestinal — sem conservantes ou aromatizantes artificiais.",
+  },
+
   // ── RAÇÃO GATO (Origens) ─────────────────────────────────────────────────────
   // ids 103-107, ordem 24-28 (continua depois do Quatree dentro de "racao-gato").
   {
@@ -590,6 +655,74 @@ const produtos = [
     id: 133, categoria: "racao-gato", ordem: 34, nome: "Wiskas Carne 900g", preco: 21.99,
     imagem: "./assets/wiskas-carne-900g.jpg",
     descricao: "Nuggets crocantes com recheio macio, prebióticos e fibras para a digestão, ômega 6 e zinco para pele e pelagem — gatos adultos.",
+  },
+
+  // ── RAÇÃO GATO (Magnus Cat, Gatan, Chanin) ───────────────────────────────────
+  // ids 148-160, ordem 35-47.
+  {
+    id: 148, categoria: "racao-gato", ordem: 35, nome: "Magnus Cat Fil 20kg", preco: 249.99,
+    imagem: "./assets/magnus-cat-fil-20kg.webp",
+    descricao: "Alimento premium completo sabor carne e frango, para gatos filhotes de até 12 meses. Com BIO COMPLEX (prebióticos, fibras e extrato de Yucca) para equilíbrio da flora intestinal, vitaminas e minerais para o crescimento e taurina para coração e visão.",
+  },
+  {
+    id: 149, categoria: "racao-gato", ordem: 36, nome: "Magnus Cat Fil 10kg", preco: 136.99,
+    imagem: "./assets/magnus-cat-fil-10kg.webp",
+    descricao: "Alimento seco premium para gatos filhotes de até 12 meses, com carne e frango para o desenvolvimento muscular e BIO COMPLEX para a saúde digestiva.",
+  },
+  {
+    id: 150, categoria: "racao-gato", ordem: 37, nome: "Magnus Cat Cast Frango Só Recheados 20kg", preco: 330.00,
+    imagem: "./assets/magnus-cat-cast-frango-so-recheados-20kg.webp",
+    descricao: "Sabor frango recheado, rico em proteína animal de alto valor biológico e minerais essenciais como cálcio, fósforo e ferro — gatos castrados.",
+  },
+  {
+    id: 151, categoria: "racao-gato", ordem: 38, nome: "Magnus Cat Cast Carne 20kg", preco: 264.90,
+    imagem: "./assets/magnus-cat-cast-carne-20kg.webp",
+    descricao: "BIO COMPLEX com fibras especiais para controle de peso, Ômegas 3 e 6, biotina e zinco quelato para pele e pelagem, e taurina para coração e visão — gatos castrados.",
+  },
+  {
+    id: 152, categoria: "racao-gato", ordem: 39, nome: "Magnus Cat Cast Carne 10kg", preco: 125.91,
+    imagem: "./assets/magnus-cat-cast-carne-10kg.webp",
+    descricao: "BIO COMPLEX com fibras especiais para controle de peso, Ômegas 3 e 6, biotina e zinco quelato para pele e pelagem, e taurina para coração e visão — gatos castrados.",
+  },
+  {
+    id: 153, categoria: "racao-gato", ordem: 40, nome: "Magnus Cat Cast Salmão 20kg", preco: 263.99,
+    imagem: "./assets/magnus-cat-cast-salmao-20kg.jpg",
+    descricao: "Alimento seco premium completo, com BIO COMPLEX, equilíbrio intestinal (prebióticos, fibras e extrato de Yucca), pele e pelagem enriquecida com ômegas 3 e 6 e taurina — gatos adultos castrados.",
+  },
+  {
+    id: 154, categoria: "racao-gato", ordem: 41, nome: "Magnus Cat Cast Salmão 10kg", preco: 139.99,
+    imagem: "./assets/magnus-cat-cast-salmao-10kg.jpg",
+    descricao: "Alimento seco premium completo, com BIO COMPLEX, equilíbrio intestinal (prebióticos, fibras e extrato de Yucca), pele e pelagem enriquecida com ômegas 3 e 6 e taurina — gatos adultos castrados.",
+  },
+  {
+    id: 155, categoria: "racao-gato", ordem: 42, nome: "Magnus Cat Salmão 10kg", preco: 155.99,
+    imagem: "./assets/magnus-cat-salmao-10kg.webp",
+    descricao: "Sabor salmão, com prebióticos e fibras para a saúde intestinal e ômegas 3 e 6 para pelagem sedosa e brilhante.",
+  },
+  {
+    id: 156, categoria: "racao-gato", ordem: 43, nome: "Magnus Cat Carne 10kg", preco: 133.99,
+    imagem: "./assets/magnus-cat-carne-10kg.jpg",
+    descricao: "Alimento seco premium completo para gatos adultos, com BIO COMPLEX, proteína de alta qualidade, equilíbrio intestinal, pele e pelagem enriquecida com ômegas 3 e 6 e taurina.",
+  },
+  {
+    id: 157, categoria: "racao-gato", ordem: 44, nome: "Gatan 20kg", preco: 144.52,
+    imagem: "./assets/gatan-20kg.jpeg",
+    descricao: "Alimento completo e balanceado, sem conservantes, com proteínas selecionadas e ingredientes naturais e funcionais. Contém taurina.",
+  },
+  {
+    id: 158, categoria: "racao-gato", ordem: 45, nome: "Gatan 10kg", preco: 77.59,
+    imagem: "./assets/gatan-10kg.jpg",
+    descricao: "Alimento completo e balanceado, sem conservantes, com proteínas selecionadas e ingredientes naturais e funcionais. Contém taurina.",
+  },
+  {
+    id: 159, categoria: "racao-gato", ordem: 46, nome: "Chanin Mix Sem Corante 25kg", preco: 219.99,
+    imagem: "./assets/chanin-mix-sem-corante-25kg.webp",
+    descricao: "Alimentação completa e equilibrada, sem corantes artificiais, com proteínas de origem animal, vitaminas e minerais — gatos adultos.",
+  },
+  {
+    id: 160, categoria: "racao-gato", ordem: 47, nome: "Chanin Mix Com Corante 25kg", preco: 213.00,
+    imagem: "./assets/chanin-mix-com-corante-25kg.webp",
+    descricao: "Ração seca sabor carne, peixe e frango, desenvolvida com base nos mais avançados conceitos de nutrição para atender as demandas diárias de gatos adultos.",
   },
 
   // ── MEDICAMENTOS ─────────────────────────────────────────────────────────
