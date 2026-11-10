@@ -359,35 +359,59 @@ const produtos = [
     descricao: "Sabor salmão, frango, linhaça e chá verde — para gatos castrados sêniores.",
   },
 
-  // ── RAÇÃO GATO (Quatree Life/Select/Gourmet, continuação da Quatree) ───────
-  // ids 112-117, ordem 18-23 (entra depois do Quatree Supreme, antes do Origens).
+  // ── RAÇÃO GATO (Quatree Supreme 1kg — a cliente esqueceu de passar antes) ──
+  // ids 174-177, ordem 18-21. Faltou a foto da "Quatree Supreme Cat Cast
+  // Frango e Salmão Sênior 7+ 1kg" na pasta — não cadastrada ainda, ver aviso.
   {
-    id: 112, categoria: "racao-gato", ordem: 18, nome: "Quatree Life Cat Cast Frango 20kg", preco: 379.99,
+    id: 174, categoria: "racao-gato", ordem: 18, nome: "Quatree Supreme Cat Fil Salmão 1kg", preco: 37.00,
+    imagem: "./assets/quatree-supreme-cat-fil-salmao-1kg.webp",
+    descricao: "Ração Super Premium Natural para gatos filhotes, sabor salmão com batata-doce, brócolis e maçã, livre de ingredientes transgênicos e antioxidantes artificiais (BHT e BHA).",
+  },
+  {
+    id: 175, categoria: "racao-gato", ordem: 19, nome: "Quatree Supreme Cat Salmão 1kg", preco: 32.97,
+    imagem: "./assets/quatree-supreme-cat-salmao-1kg.webp",
+    descricao: "Sabor salmão, batata-doce, brócolis e maçã — controle de peso, controle do pH urinário e prevenção de bolas de pelo para gatos adultos.",
+  },
+  {
+    id: 176, categoria: "racao-gato", ordem: 20, nome: "Quatree Supreme Cat Cast Salmão 1kg", preco: 32.97,
+    imagem: "./assets/quatree-supreme-cat-cast-salmao-1kg.webp",
+    descricao: "Sabor salmão e batata-doce, protetora da saúde bucal — controle de peso ideal, pelagem saudável, saúde intestinal e urinária para gatos castrados.",
+  },
+  {
+    id: 177, categoria: "racao-gato", ordem: 21, nome: "Quatree Supreme Cat Cast Frango 1kg", preco: 28.79,
+    imagem: "./assets/quatree-supreme-cat-cast-frango-1kg.webp",
+    descricao: "Rica em proteína animal de alto valor biológico, com minerais essenciais (cálcio, fósforo e ferro), vitaminas A, D e E e ácidos graxos para a pelagem.",
+  },
+
+  // ── RAÇÃO GATO (Quatree Life/Select/Gourmet, continuação da Quatree) ───────
+  // ids 112-117, ordem 22-27 (entra depois do Quatree Supreme, antes do Origens).
+  {
+    id: 112, categoria: "racao-gato", ordem: 22, nome: "Quatree Life Cat Cast Frango 20kg", preco: 379.99,
     imagem: "./assets/quatree-life-cat-cast-frango-20kg.jpg",
     descricao: "Equilíbrio do pH urinário, mix de proteínas e legumes para saciedade, ômegas 3 e 6 e batata-doce para pele e pelagem — gatos castrados.",
   },
   {
-    id: 113, categoria: "racao-gato", ordem: 19, nome: "Quatree Life Cat Cast Frango 10kg", preco: 199.90,
+    id: 113, categoria: "racao-gato", ordem: 23, nome: "Quatree Life Cat Cast Frango 10kg", preco: 199.90,
     imagem: "./assets/quatree-life-cat-cast-frango-10kg.webp",
     descricao: "Sabor frango e arroz, alimento seco recomendado para gatos adultos castrados.",
   },
   {
-    id: 114, categoria: "racao-gato", ordem: 20, nome: "Quatree Select Cat Cast Frango 10kg", preco: 184.99,
+    id: 114, categoria: "racao-gato", ordem: 24, nome: "Quatree Select Cat Cast Frango 10kg", preco: 184.99,
     imagem: "./assets/quatree-select-cat-cast-frango-10kg.jpg",
     descricao: "Alimento premium com ingredientes naturais, carboidratos de fácil digestão e proteínas de alto valor biológico — gatos castrados.",
   },
   {
-    id: 115, categoria: "racao-gato", ordem: 21, nome: "Quatree Gourmet Mix Cast 20kg", preco: 365.90,
+    id: 115, categoria: "racao-gato", ordem: 25, nome: "Quatree Gourmet Mix Cast 20kg", preco: 365.90,
     imagem: "./assets/quatree-gourmet-mix-cast-20kg.webp",
     descricao: "Sabor mix de carnes, com fórmula indoor que ajuda no controle de peso, bolas de pelo e saúde do trato urinário — gatos castrados.",
   },
   {
-    id: 116, categoria: "racao-gato", ordem: 22, nome: "Quatree Gourmet Mix Cast 10kg", preco: 180.00,
+    id: 116, categoria: "racao-gato", ordem: 26, nome: "Quatree Gourmet Mix Cast 10kg", preco: 180.00,
     imagem: "./assets/quatree-gourmet-mix-cast-10kg.webp",
     descricao: "Sabor peixe, carne e frango, indicada para gatos adultos com tendência à obesidade.",
   },
   {
-    id: 117, categoria: "racao-gato", ordem: 23, nome: "Quatree Gourmet Cast Delicias do Mar 20kg", preco: 292.99,
+    id: 117, categoria: "racao-gato", ordem: 27, nome: "Quatree Gourmet Cast Delicias do Mar 20kg", preco: 292.99,
     imagem: "./assets/quatree-gourmet-cast-delicias-mar-20kg.jpg",
     descricao: "Sabor peixe, rica em proteína de alta qualidade e ômegas 3 e 6, com bom balanceamento de minerais para a saúde do trato urinário.",
   },
@@ -599,27 +623,27 @@ const produtos = [
   // ── RAÇÃO GATO (Origens) ─────────────────────────────────────────────────────
   // ids 103-107, ordem 24-28 (continua depois do Quatree dentro de "racao-gato").
   {
-    id: 103, categoria: "racao-gato", ordem: 24, nome: "Origens Cat Carne 10kg", preco: 200.64,
+    id: 103, categoria: "racao-gato", ordem: 28, nome: "Origens Cat Carne 10kg", preco: 200.64,
     imagem: "./assets/origens-cat-carne-10kg.webp",
     descricao: "Com taurina e proteína de alta qualidade, equilíbrio do pH urinário e extrato de yucca — gatos adultos sabor carne.",
   },
   {
-    id: 104, categoria: "racao-gato", ordem: 25, nome: "Origens Cat Cast Carne 10kg", preco: 199.99,
+    id: 104, categoria: "racao-gato", ordem: 29, nome: "Origens Cat Cast Carne 10kg", preco: 199.99,
     imagem: "./assets/origens-cat-cast-carne-10kg.webp",
     descricao: "Para gatos castrados adultos, com prebióticos e fibras para a saúde intestinal, Ômegas 3 e 6 e calorias reduzidas.",
   },
   {
-    id: 105, categoria: "racao-gato", ordem: 26, nome: "Origens Cat Cast Frango 10kg", preco: 166.99,
+    id: 105, categoria: "racao-gato", ordem: 30, nome: "Origens Cat Cast Frango 10kg", preco: 166.99,
     imagem: "./assets/origens-cat-cast-frango-10kg.webp",
     descricao: "Sabor salmão e frango, fórmula completa desenvolvida para gatos castrados.",
   },
   {
-    id: 106, categoria: "racao-gato", ordem: 27, nome: "Origens Cat Cast Salmão 10kg", preco: 166.99,
+    id: 106, categoria: "racao-gato", ordem: 31, nome: "Origens Cat Cast Salmão 10kg", preco: 166.99,
     imagem: "./assets/origens-cat-cast-salmao-10kg.webp",
     descricao: "Sabor salmão, para gatos adultos castrados de todos os tamanhos.",
   },
   {
-    id: 107, categoria: "racao-gato", ordem: 28, nome: "Origens Cat Fil Carne e Frango 10kg", preco: 199.99,
+    id: 107, categoria: "racao-gato", ordem: 32, nome: "Origens Cat Fil Carne e Frango 10kg", preco: 199.99,
     imagem: "./assets/origens-cat-fil-carne-frango-10kg.webp",
     descricao: "Sabor frango e cereais, mantém o equilíbrio do pH urinário, rico em vitaminas e Ômega 3 e 6 — gatos filhotes.",
   },
@@ -627,32 +651,32 @@ const produtos = [
   // ── RAÇÃO GATO (Special Cat Ultralife, Wiskas — 5ª/6ª marcas reais) ────────
   // ids 128-133, ordem 29-34.
   {
-    id: 128, categoria: "racao-gato", ordem: 29, nome: "Special Cat Ultralife Cast Salmão 20kg", preco: 356.23,
+    id: 128, categoria: "racao-gato", ordem: 33, nome: "Special Cat Ultralife Cast Salmão 20kg", preco: 356.23,
     imagem: "./assets/special-cat-ultralife-cast-salmao-20kg.webp",
     descricao: "Sabor salmão e arroz, com batata-doce, mandioca, beterraba e ervilha — baixo teor calórico e L-carnitina para o peso ideal de gatos castrados.",
   },
   {
-    id: 129, categoria: "racao-gato", ordem: 30, nome: "Special Cat Ultralife Cast Salmão 10kg", preco: 201.90,
+    id: 129, categoria: "racao-gato", ordem: 34, nome: "Special Cat Ultralife Cast Salmão 10kg", preco: 201.90,
     imagem: "./assets/special-cat-ultralife-cast-salmao-10kg.webp",
     descricao: "Sabor salmão e arroz, com baixo teor calórico e L-carnitina — ajuda no controle do pH urinário de gatos castrados.",
   },
   {
-    id: 130, categoria: "racao-gato", ordem: 31, nome: "Special Cat Ultralife Cast Frango 20kg", preco: 290.61,
+    id: 130, categoria: "racao-gato", ordem: 35, nome: "Special Cat Ultralife Cast Frango 20kg", preco: 290.61,
     imagem: "./assets/special-cat-ultralife-cast-frango-20kg.webp",
     descricao: "35% de proteína, com ômegas 3 e 6, zinco, L-carnitina e extrato de yucca — controle de peso, bolas de pelo e trato urinário de gatos castrados.",
   },
   {
-    id: 131, categoria: "racao-gato", ordem: 32, nome: "Special Cat Ultralife Cast Frango 10kg", preco: 174.41,
+    id: 131, categoria: "racao-gato", ordem: 36, nome: "Special Cat Ultralife Cast Frango 10kg", preco: 174.41,
     imagem: "./assets/special-cat-ultralife-cast-frango-10kg.webp",
     descricao: "35% de proteína, com ômegas 3 e 6 e zinco — ajuda no controle de peso, digestão e pH urinário de gatos castrados.",
   },
   {
-    id: 132, categoria: "racao-gato", ordem: 33, nome: "Wiskas Carne 2,7kg", preco: 49.99,
+    id: 132, categoria: "racao-gato", ordem: 37, nome: "Wiskas Carne 2,7kg", preco: 49.99,
     imagem: "./assets/wiskas-carne-2700kg.jpg",
     descricao: "Nuggets crocantes com recheio macio, prebióticos e fibras para a digestão, ômega 6 e zinco para pele e pelagem — gatos adultos.",
   },
   {
-    id: 133, categoria: "racao-gato", ordem: 34, nome: "Wiskas Carne 900g", preco: 21.99,
+    id: 133, categoria: "racao-gato", ordem: 38, nome: "Wiskas Carne 900g", preco: 21.99,
     imagem: "./assets/wiskas-carne-900g.jpg",
     descricao: "Nuggets crocantes com recheio macio, prebióticos e fibras para a digestão, ômega 6 e zinco para pele e pelagem — gatos adultos.",
   },
@@ -660,67 +684,67 @@ const produtos = [
   // ── RAÇÃO GATO (Magnus Cat, Gatan, Chanin) ───────────────────────────────────
   // ids 148-160, ordem 35-47.
   {
-    id: 148, categoria: "racao-gato", ordem: 35, nome: "Magnus Cat Fil 20kg", preco: 249.99,
+    id: 148, categoria: "racao-gato", ordem: 39, nome: "Magnus Cat Fil 20kg", preco: 249.99,
     imagem: "./assets/magnus-cat-fil-20kg.webp",
     descricao: "Alimento premium completo sabor carne e frango, para gatos filhotes de até 12 meses. Com BIO COMPLEX (prebióticos, fibras e extrato de Yucca) para equilíbrio da flora intestinal, vitaminas e minerais para o crescimento e taurina para coração e visão.",
   },
   {
-    id: 149, categoria: "racao-gato", ordem: 36, nome: "Magnus Cat Fil 10kg", preco: 136.99,
+    id: 149, categoria: "racao-gato", ordem: 40, nome: "Magnus Cat Fil 10kg", preco: 136.99,
     imagem: "./assets/magnus-cat-fil-10kg.webp",
     descricao: "Alimento seco premium para gatos filhotes de até 12 meses, com carne e frango para o desenvolvimento muscular e BIO COMPLEX para a saúde digestiva.",
   },
   {
-    id: 150, categoria: "racao-gato", ordem: 37, nome: "Magnus Cat Cast Frango Só Recheados 20kg", preco: 330.00,
+    id: 150, categoria: "racao-gato", ordem: 41, nome: "Magnus Cat Cast Frango Só Recheados 20kg", preco: 330.00,
     imagem: "./assets/magnus-cat-cast-frango-so-recheados-20kg.webp",
     descricao: "Sabor frango recheado, rico em proteína animal de alto valor biológico e minerais essenciais como cálcio, fósforo e ferro — gatos castrados.",
   },
   {
-    id: 151, categoria: "racao-gato", ordem: 38, nome: "Magnus Cat Cast Carne 20kg", preco: 264.90,
+    id: 151, categoria: "racao-gato", ordem: 42, nome: "Magnus Cat Cast Carne 20kg", preco: 264.90,
     imagem: "./assets/magnus-cat-cast-carne-20kg.webp",
     descricao: "BIO COMPLEX com fibras especiais para controle de peso, Ômegas 3 e 6, biotina e zinco quelato para pele e pelagem, e taurina para coração e visão — gatos castrados.",
   },
   {
-    id: 152, categoria: "racao-gato", ordem: 39, nome: "Magnus Cat Cast Carne 10kg", preco: 125.91,
+    id: 152, categoria: "racao-gato", ordem: 43, nome: "Magnus Cat Cast Carne 10kg", preco: 125.91,
     imagem: "./assets/magnus-cat-cast-carne-10kg.webp",
     descricao: "BIO COMPLEX com fibras especiais para controle de peso, Ômegas 3 e 6, biotina e zinco quelato para pele e pelagem, e taurina para coração e visão — gatos castrados.",
   },
   {
-    id: 153, categoria: "racao-gato", ordem: 40, nome: "Magnus Cat Cast Salmão 20kg", preco: 263.99,
+    id: 153, categoria: "racao-gato", ordem: 44, nome: "Magnus Cat Cast Salmão 20kg", preco: 263.99,
     imagem: "./assets/magnus-cat-cast-salmao-20kg.jpg",
     descricao: "Alimento seco premium completo, com BIO COMPLEX, equilíbrio intestinal (prebióticos, fibras e extrato de Yucca), pele e pelagem enriquecida com ômegas 3 e 6 e taurina — gatos adultos castrados.",
   },
   {
-    id: 154, categoria: "racao-gato", ordem: 41, nome: "Magnus Cat Cast Salmão 10kg", preco: 139.99,
+    id: 154, categoria: "racao-gato", ordem: 45, nome: "Magnus Cat Cast Salmão 10kg", preco: 139.99,
     imagem: "./assets/magnus-cat-cast-salmao-10kg.jpg",
     descricao: "Alimento seco premium completo, com BIO COMPLEX, equilíbrio intestinal (prebióticos, fibras e extrato de Yucca), pele e pelagem enriquecida com ômegas 3 e 6 e taurina — gatos adultos castrados.",
   },
   {
-    id: 155, categoria: "racao-gato", ordem: 42, nome: "Magnus Cat Salmão 10kg", preco: 155.99,
+    id: 155, categoria: "racao-gato", ordem: 46, nome: "Magnus Cat Salmão 10kg", preco: 155.99,
     imagem: "./assets/magnus-cat-salmao-10kg.webp",
     descricao: "Sabor salmão, com prebióticos e fibras para a saúde intestinal e ômegas 3 e 6 para pelagem sedosa e brilhante.",
   },
   {
-    id: 156, categoria: "racao-gato", ordem: 43, nome: "Magnus Cat Carne 10kg", preco: 133.99,
+    id: 156, categoria: "racao-gato", ordem: 47, nome: "Magnus Cat Carne 10kg", preco: 133.99,
     imagem: "./assets/magnus-cat-carne-10kg.jpg",
     descricao: "Alimento seco premium completo para gatos adultos, com BIO COMPLEX, proteína de alta qualidade, equilíbrio intestinal, pele e pelagem enriquecida com ômegas 3 e 6 e taurina.",
   },
   {
-    id: 157, categoria: "racao-gato", ordem: 44, nome: "Gatan 20kg", preco: 144.52,
+    id: 157, categoria: "racao-gato", ordem: 48, nome: "Gatan 20kg", preco: 144.52,
     imagem: "./assets/gatan-20kg.jpeg",
     descricao: "Alimento completo e balanceado, sem conservantes, com proteínas selecionadas e ingredientes naturais e funcionais. Contém taurina.",
   },
   {
-    id: 158, categoria: "racao-gato", ordem: 45, nome: "Gatan 10kg", preco: 77.59,
+    id: 158, categoria: "racao-gato", ordem: 49, nome: "Gatan 10kg", preco: 77.59,
     imagem: "./assets/gatan-10kg.jpg",
     descricao: "Alimento completo e balanceado, sem conservantes, com proteínas selecionadas e ingredientes naturais e funcionais. Contém taurina.",
   },
   {
-    id: 159, categoria: "racao-gato", ordem: 46, nome: "Chanin Mix Sem Corante 25kg", preco: 219.99,
+    id: 159, categoria: "racao-gato", ordem: 50, nome: "Chanin Mix Sem Corante 25kg", preco: 219.99,
     imagem: "./assets/chanin-mix-sem-corante-25kg.webp",
     descricao: "Alimentação completa e equilibrada, sem corantes artificiais, com proteínas de origem animal, vitaminas e minerais — gatos adultos.",
   },
   {
-    id: 160, categoria: "racao-gato", ordem: 47, nome: "Chanin Mix Com Corante 25kg", preco: 213.00,
+    id: 160, categoria: "racao-gato", ordem: 51, nome: "Chanin Mix Com Corante 25kg", preco: 213.00,
     imagem: "./assets/chanin-mix-com-corante-25kg.webp",
     descricao: "Ração seca sabor carne, peixe e frango, desenvolvida com base nos mais avançados conceitos de nutrição para atender as demandas diárias de gatos adultos.",
   },
