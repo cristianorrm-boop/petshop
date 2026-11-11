@@ -1023,7 +1023,7 @@ btn.addEventListener("click", async () => {
   addLog("", "info");
   for (const c of categorias) {
     try {
-      await db.collection("categorias").doc(c.id).set(c);
+      await db.collection("categorias").doc(c.id).set(c, { merge: true });
       addLog(`✔ Categoria: ${c.nome}`, "ok");
       ok++;
     } catch (e) {
@@ -1036,16 +1036,28 @@ btn.addEventListener("click", async () => {
   addLog("▶ Importando produtos...", "info");
   for (const p of produtos) {
     try {
-      await db.collection("produtos").doc(String(p.id)).set({
-        ...p,
+      // O catálogo (nome/categoria/ordem/preco/imagem/descricao) é sempre
+      // atualizado — é o que esta ferramenta existe pra manter. Estoque,
+      // código de barras, ativo/destaque e variações são operacionais (quem
+      // manda nisso é o admin, ao vivo) — só entram no primeiro cadastro,
+      // nunca são revertidos num reimport.
+      const ref = db.collection("produtos").doc(String(p.id));
+      const atual = await ref.get();
+      const dadosOperacionais = atual.exists ? {} : {
         codigoBarras: null,
+        codigo: null,
+        estoque: 0,
+        estoqueMinimo: null,
+        custo: null,
+        precoAntigo: null,
         ativo: true,
         destaque: false,
         entrega: true,
         variacoes: [],
         adicionaisGrupos: [],
         criadoEm: firebase.firestore.FieldValue.serverTimestamp(),
-      });
+      };
+      await ref.set({ ...p, ...dadosOperacionais }, { merge: true });
       addLog(`✔ [${p.id}] ${p.nome}`, "ok");
       ok++;
     } catch (e) {
