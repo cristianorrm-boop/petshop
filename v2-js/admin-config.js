@@ -193,11 +193,10 @@ window.Admin.modulos.push((A) => {
         ${grade(marcar("Entrega", "entregaAtiva", c.entregaAtiva), marcar("Retirada na loja", "retiradaAtiva", c.retiradaAtiva))}
         ${titulo("Entrega")}
         ${grade(
-          numero("Frete padrão (R$)", "taxaEntrega", c.taxaEntrega, 'min="0"', "Usado quando não há regiões cadastradas."),
+          numero("Frete padrão (R$)", "taxaEntrega", c.taxaEntrega, 'min="0"', "Valor único de entrega (sem região por bairro/cidade nesta versão)."),
           numero("Frete grátis a partir de (R$)", "freteGratisAcima", c.freteGratisAcima, 'min="0"', "0 = nunca."),
           numero("Pedido mínimo (R$)", "pedidoMinimo", c.pedidoMinimo, 'min="0"', "0 = sem mínimo. Vale para entrega e retirada."))}
         ${area("Aviso na etapa de entrega", "entregaAviso", c.entregaAviso, 2, "Ex.: Entregamos de segunda a sábado, após confirmação do pagamento.")}
-        <p class="dica"><i class="fa-solid fa-circle-info"></i> Valores por bairro/cidade ficam em <a href="#" id="ir-fretes">Fretes</a>.</p>
         ${titulo("Retirada na loja")}
         ${grade(campo("Endereço da retirada", "retiradaEndereco", c.retiradaEndereco, "", "Em branco: usa o endereço da loja."), area("Instruções de retirada", "retiradaInstrucoes", c.retiradaInstrucoes, 2, "Ex.: Apresente o código do pedido no balcão."))}
         <div class="dias-semana"><span>Dias de retirada</span>${DIAS.map((d, i) => `<label class="check"><input type="checkbox" name="dia_${i}" ${(c.retiradaDias || []).map(Number).includes(i) ? "checked" : ""} /> ${d}</label>`).join("")}</div>
@@ -316,8 +315,6 @@ window.Admin.modulos.push((A) => {
       if (ativa && ativa.scrollIntoView) ativa.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
     };
     $("#cfg-abas").onclick = (e) => { const b = e.target.closest("[data-secao]"); if (b) abrirSecao(b.dataset.secao); };
-    const irFretes = $("#ir-fretes");
-    if (irFretes) irFretes.onclick = (e) => { e.preventDefault(); A.abrirTab("fretes"); };
 
     // pré-visualização de cores / estilo
     const prev = $("#prev-loja");

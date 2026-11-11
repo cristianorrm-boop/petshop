@@ -420,11 +420,21 @@ document.addEventListener("DOMContentLoaded", () => {
     carregando("produtos");
     const [produtos, categorias] = await Promise.all([DB.produtos.listar(), DB.categorias.listar()]);
     const cats = Object.fromEntries(categorias.map((c) => [c.id, c.nome]));
-    // ordem é extensão própria (fora do schema padrão do loja-online): menor
-    // ordem aparece primeiro, quem não tem vai pro final por nome (ver spec,
-    // decisão #3, e docs/superpowers/plans/2026-11-11-...-fase2-...md).
+    // ordem é extensão própria (fora do schema padrão do loja-online). Produto
+    // reinicia a contagem de `ordem` dentro de cada categoria (igual o site
+    // público faz em script.js:83-96) — por isso a listagem do admin precisa
+    // ordenar primeiro pela posição da categoria, e só depois pela ordem do
+    // produto dentro dela, senão os "ordem: 1" de categorias diferentes
+    // aparecem grudados e a organização feita a dedo some da tela.
     const compararPorOrdem = (a, b) => (a.ordem ?? Infinity) - (b.ordem ?? Infinity) || a.nome.localeCompare(b.nome, "pt-BR");
-    const lista = produtos.filter((p) => p.nome.toLowerCase().includes(buscaProd.toLowerCase())).sort(compararPorOrdem);
+    const categoriasOrdenadas = [...categorias].sort(compararPorOrdem);
+    const posCat = Object.fromEntries(categoriasOrdenadas.map((c, idx) => [c.id, idx]));
+    const compararProdutos = (a, b) => {
+      const pa = posCat[a.categoria] ?? Infinity, pb = posCat[b.categoria] ?? Infinity;
+      if (pa !== pb) return pa - pb;
+      return (a.ordem ?? Number(a.id) ?? 0) - (b.ordem ?? Number(b.id) ?? 0);
+    };
+    const lista = produtos.filter((p) => p.nome.toLowerCase().includes(buscaProd.toLowerCase())).sort(compararProdutos);
     $("#tab-produtos").innerHTML = `
       <div class="cab"><h1>Produtos</h1><div class="barra-acoes"><button class="btn sec" id="exemplos-produtos" title="Adiciona produtos de exemplo de uma loja de acessórios"><i class="fa-solid fa-wand-magic-sparkles"></i> Adicionar exemplos</button><button class="btn" id="novo-produto"><i class="fa-solid fa-plus"></i> Novo produto</button></div></div>
       <div class="filtros"><input id="busca-prod" placeholder="Buscar produto..." value="${esc(buscaProd)}" /></div>
