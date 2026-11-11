@@ -625,45 +625,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ---- Fretes (valor de entrega por região) ----
-  telas.fretes = async () => {
-    carregando("fretes");
-    const [lista, c] = await Promise.all([DB.fretes.listar(), DB.config.obter()]);
-    lista.sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-    $("#tab-fretes").innerHTML = `
-      <div class="cab"><h1>Fretes</h1><button class="btn" id="novo-frete"><i class="fa-solid fa-plus"></i> Nova região</button></div>
-      <p class="dica" style="margin-bottom:12px">Cadastre o valor de entrega por bairro, cidade ou zona. No checkout o cliente escolhe a região (e ela é selecionada sozinha quando o nome coincide com o bairro/cidade do CEP).
-        ${lista.length ? "" : `Sem regiões cadastradas, vale o frete padrão de ${moeda(c.taxaEntrega)} (Configurações).`}
-        ${c.freteGratisAcima > 0 ? `Frete grátis para pedidos a partir de ${moeda(c.freteGratisAcima)}.` : ""}</p>
-      <table><thead><tr><th>Região</th><th>Valor</th><th>Prazo</th><th>Situação</th><th></th></tr></thead><tbody>
-      ${lista.map((f) => `<tr><td><b>${esc(f.nome)}</b></td><td>${moeda(f.valor)}</td><td>${esc(f.prazo || "—")}</td>
-        <td><span class="status ${f.ativo !== false ? "s-ativo" : "s-inativo"}">${f.ativo !== false ? "Ativo" : "Inativo"}</span></td>
-        <td class="acoes"><button class="btn sec peq" data-edit="${f.id}">Editar</button> <button class="btn perigo peq" data-del="${f.id}">Excluir</button></td></tr>`).join("") || `<tr><td colspan="5" class="vazio">Nenhuma região cadastrada.</td></tr>`}
-      </tbody></table>`;
-    $("#novo-frete").onclick = () => formFrete();
-  };
-  async function formFrete(id) {
-    const f = id ? await DB.fretes.obter(id) : { nome: "", valor: "", prazo: "", ativo: true };
-    abrirModal(id ? "Editar região" : "Nova região", `
-      <label>Região (bairro, cidade ou zona)<input name="nome" value="${esc(f.nome)}" required placeholder="Ex.: Boa Viagem" /></label>
-      <div class="grid2">
-        <label>Valor do frete (R$)<input name="valor" type="number" step="0.01" min="0" value="${f.valor}" required /></label>
-        <label>Prazo (opcional)<input name="prazo" value="${esc(f.prazo || "")}" placeholder="Ex.: 1 a 2 dias" /></label>
-      </div>
-      <label class="check"><input type="checkbox" name="ativo" ${f.ativo !== false ? "checked" : ""} /> Região ativa</label>`,
-      async (d) => {
-        const nome = d.nome.trim();
-        if ((await DB.fretes.listar()).some((x) => x.nome.toLowerCase() === nome.toLowerCase() && x.id !== f.id)) { toast("Já existe uma região com esse nome"); return false; }
-        if (!(await tentar(() => DB.fretes.salvar({ ...f, nome, valor: parseFloat(d.valor) || 0, prazo: d.prazo.trim(), ativo: d.ativo === "on" })))) return false;
-        abrirTab("fretes"); toast("Região salva");
-      });
-  }
-  $("#tab-fretes").addEventListener("click", async (e) => {
-    const ed = e.target.closest("[data-edit]"), del = e.target.closest("[data-del]");
-    if (ed) formFrete(ed.dataset.edit);
-    if (del && confirm("Excluir esta região?")) { if (await tentar(() => DB.fretes.remover(del.dataset.del))) abrirTab("fretes"); }
-  });
-
   // ---- Cupons ----
   telas.cupons = async () => {
     carregando("cupons");
