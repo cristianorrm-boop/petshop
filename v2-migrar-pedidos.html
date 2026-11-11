@@ -100,14 +100,25 @@ btnPedidos.addEventListener("click", async () => {
   addLog("▶ Migrando pedidos...", "info");
   let migrados = 0, pulados = 0, erros = 0;
   const snap = await db.collection("pedidos").get();
+  // Antes do corte final (Fase 5), o admin ATUAL continua marcando/desmarcando
+  // `atendido` no dia a dia, então o `status` fica desatualizado se a migração
+  // só rodar uma vez. Por isso RECALCULA sempre que o status atual ainda é um
+  // dos dois valores que esta própria migração pode produzir ("novo" ou
+  // "entregue") — nunca mexe se já for "confirmado"/"enviado"/"cancelado",
+  // que só existem depois do corte, avançados pela tela nova de verdade.
+  const statusDestaMigracao = new Set(["novo", "entregue"]);
   for (const doc of snap.docs) {
     try {
-      if (Object.prototype.hasOwnProperty.call(doc.data(), "status")) {
+      const data = doc.data();
+      if (Object.prototype.hasOwnProperty.call(data, "status") && !statusDestaMigracao.has(data.status)) {
         pulados++;
         continue;
       }
-      const atendido = doc.data().atendido;
-      const status = atendido === true ? "entregue" : "novo";
+      const status = data.atendido === true ? "entregue" : "novo";
+      if (data.status === status) {
+        pulados++;
+        continue;
+      }
       await doc.ref.update({ status });
       addLog(`✔ Pedido migrado: ${doc.id} -> status: ${status}`, "ok");
       migrados++;

@@ -77,6 +77,12 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Histórico de ajustes de estoque (entrada/saída/ajuste/venda/pedido),
+    // gravado dentro da mesma transação que atualiza o estoque do produto.
+    match /movimentos/{doc} {
+      allow read, write: if isAdmin();
+    }
+
     match /clientes/{doc} {
       allow read, write: if isAdmin();
     }

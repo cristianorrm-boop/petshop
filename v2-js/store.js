@@ -719,7 +719,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await DB.pedidos.criar(pedido);
 
       const chavePix = (config.pixChave || "").trim();
-      const linkAcomp = new URL("acompanhar.html?c=" + codigo, location.href).href;
+      const linkAcomp = new URL("v2-acompanhar.html?c=" + codigo, location.href).href;
       const linhas = [
         `*Pedido #${codigo} — ${config.nomeLoja}*`, "",
         ...pedido.itens.map((i) => `• ${i.qtd}x ${i.nome}${i.variante ? ` (${i.variante})` : ""} — ${moeda(i.preco * i.qtd)}`), "",
@@ -740,7 +740,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       $("#sucesso-texto").textContent = config.textoSucesso || "Guarde o código para acompanhar:";
       $("#sucesso-codigo").textContent = codigo;
-      $("#sucesso-link").href = "acompanhar.html?c=" + codigo;
+      $("#sucesso-link").href = "v2-acompanhar.html?c=" + codigo;
       $("#sucesso-whats").href = `https://wa.me/${digitos(config.whatsapp)}?text=${encodeURIComponent(linhas.join("\n"))}`;
       const pixBox = $("#sucesso-pix");
       pixBox.hidden = !(pedido.pagamento === "PIX" && chavePix);

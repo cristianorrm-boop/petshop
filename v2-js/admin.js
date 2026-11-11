@@ -355,7 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   const mensagemStatus = (p, cfg) => {
-    const link = new URL("acompanhar.html?c=" + p.codigo, location.href).href;
+    const link = new URL("v2-acompanhar.html?c=" + p.codigo, location.href).href;
     const frases = {
       novo: "recebemos o seu pedido e já vamos confirmá-lo",
       confirmado: "foi confirmado e está sendo preparado",

@@ -129,20 +129,31 @@ btnProdutos.addEventListener("click", async () => {
   const snap = await db.collection("produtos").get();
   for (const doc of snap.docs) {
     try {
-      if (Object.prototype.hasOwnProperty.call(doc.data(), "estoque")) {
-        pulados++;
-        continue;
-      }
-      await doc.ref.update({
+      const data = doc.data();
+      // Campo a campo: NUNCA sobrescreve um campo que já existe (ex.: `ativo`
+      // e `destaque` já existem no cadastro atual, usados pelo site pra
+      // "esgotado" e "destaques" — sobrescrever apagaria um ajuste real da
+      // cliente). `codigo` reaproveita `codigoBarras` quando já tiver sido
+      // preenchido, em vez de sempre começar nulo.
+      const padroes = {
         estoque: 0,
-        codigo: null,
+        codigo: Object.prototype.hasOwnProperty.call(data, "codigoBarras") ? data.codigoBarras : null,
         estoqueMinimo: null,
         ativo: true,
         destaque: false,
         precoAntigo: null,
         custo: null,
-      });
-      addLog(`✔ Produto migrado: ${doc.id}`, "ok");
+      };
+      const faltando = {};
+      for (const [campo, valor] of Object.entries(padroes)) {
+        if (!Object.prototype.hasOwnProperty.call(data, campo)) faltando[campo] = valor;
+      }
+      if (Object.keys(faltando).length === 0) {
+        pulados++;
+        continue;
+      }
+      await doc.ref.update(faltando);
+      addLog(`✔ Produto migrado: ${doc.id} (${Object.keys(faltando).join(", ")})`, "ok");
       migrados++;
     } catch (e) {
       addLog(`✘ Erro em ${doc.id} — ${e.message}`, "err");

@@ -1,7 +1,10 @@
 // Registro do service worker e botão "Instalar app"
 (function () {
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) {
-    window.addEventListener("load", () => navigator.serviceWorker.register("v2-sw.js").catch(() => {}));
+    // escopo explícito "./v2-" — sem isso, o registro pega o escopo padrão
+    // "/" e passa a controlar também o site atual (sw.js/sw-admin.js
+    // registrados nesse mesmo escopo), apagando os caches dele.
+    window.addEventListener("load", () => navigator.serviceWorker.register("v2-sw.js", { scope: "./v2-" }).catch(() => {}));
   }
 
   let evento = null;

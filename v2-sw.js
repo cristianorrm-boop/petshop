@@ -12,8 +12,14 @@ self.addEventListener("install", (e) => {
 });
 
 self.addEventListener("activate", (e) => {
+  // `caches` é por ORIGEM, não por escopo do service worker — mesmo com o
+  // registro restrito a "./v2-", um cleanup "apaga tudo que não for a minha
+  // versão" apagaria também os caches do site atual (sw.js/sw-admin.js).
+  // Por isso só mexe em chaves que comecem com "manejomix-v2-".
   e.waitUntil(
-    caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== VERSAO).map((k) => caches.delete(k)))).then(() => self.clients.claim())
+    caches.keys()
+      .then((ks) => Promise.all(ks.filter((k) => k.startsWith("manejomix-v2-") && k !== VERSAO).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
@@ -29,6 +35,6 @@ self.addEventListener("fetch", (e) => {
         if (res.ok) { const copia = res.clone(); caches.open(VERSAO).then((c) => c.put(req, copia)); }
         return res;
       })
-      .catch(() => caches.match(req).then((r) => r || (req.mode === "navigate" ? caches.match("index.html") : Response.error())))
+      .catch(() => caches.match(req).then((r) => r || (req.mode === "navigate" ? caches.match("v2-index.html") : Response.error())))
   );
 });
