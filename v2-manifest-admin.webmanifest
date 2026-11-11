@@ -1,0 +1,32 @@
+{
+  "id": "./v2-admin.html",
+  "name": "Loja Online — Administração",
+  "short_name": "Admin",
+  "description": "Painel administrativo da loja.",
+  "start_url": "./v2-admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "v2-icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "v2-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "v2-icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
