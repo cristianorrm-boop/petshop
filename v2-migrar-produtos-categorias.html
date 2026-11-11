@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migração V2 — Produtos e Categorias — Manejo Mix</title>
+  <!-- Ferramenta da Fase 1 da migração pra arquitetura loja-online (ver
+       docs/superpowers/plans/2026-11-10-migracao-v2-fase1-fundacao.md).
+       Só ADICIONA campos novos via .update() — nunca sobrescreve o
+       documento inteiro, então pode rodar quantas vezes quiser sem
+       perder nada que já exista. -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    h1 { font-size: 1.4rem; margin-bottom: 8px; color: #D4A017; }
+    p  { font-size: .9rem; color: #aaa; margin-bottom: 24px; text-align: center; max-width: 560px; }
+    .botoes { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    button.acao { padding: 14px 28px; background: #D4A017; color: #000; font-size: 1rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: opacity .2s; }
+    button.acao:disabled { opacity: .45; cursor: not-allowed; }
+    #log  { margin-top: 24px; width: 100%; max-width: 560px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 16px; font-size: .8rem; font-family: monospace; max-height: 400px; overflow-y: auto; }
+    #login-box { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; margin-bottom: 20px; }
+    #login-box input { padding: 12px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #eee; font-size: .9rem; }
+    #login-error { color: #f44336; font-size: .8rem; display: none; }
+    .ok   { color: #4caf50; }
+    .err  { color: #f44336; }
+    .info { color: #90caf9; }
+    .skip { color: #888; }
+  </style>
+</head>
+<body>
+
+<h1>🛠️ Migração V2 — Produtos e Categorias</h1>
+<p>Faça login com o usuário admin. Os dois botões só ADICIONAM os campos novos
+   (estoque, código de barras, etc.) nos documentos que ainda não tiverem —
+   quem já tiver os campos é pulado. Pode rodar quantas vezes quiser, não
+   duplica nem reseta nada.</p>
+
+<div id="login-box">
+  <input type="email" id="email-input" placeholder="E-mail do admin">
+  <input type="password" id="senha-input" placeholder="Senha">
+  <button id="login-btn">🔐 Entrar</button>
+  <span id="login-error">E-mail ou senha inválidos.</span>
+</div>
+
+<div class="botoes">
+  <button class="acao" id="btn-categorias" disabled>📁 Migrar categorias</button>
+  <button class="acao" id="btn-produtos" disabled>📦 Migrar produtos</button>
+</div>
+
+<div id="log"><span class="info">Faça login para habilitar a migração.</span></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="./firebase-config.js"></script>
+
+<script>
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const log = document.getElementById("log");
+const btnCategorias = document.getElementById("btn-categorias");
+const btnProdutos = document.getElementById("btn-produtos");
+const loginBtn = document.getElementById("login-btn");
+const loginBox = document.getElementById("login-box");
+const loginError = document.getElementById("login-error");
+
+const addLog = (msg, tipo = "ok") => {
+  const span = document.createElement("span");
+  span.className = tipo;
+  span.textContent = msg;
+  log.appendChild(span);
+  log.appendChild(document.createElement("br"));
+  log.scrollTop = log.scrollHeight;
+};
+
+loginBtn.addEventListener("click", () => {
+  const email = document.getElementById("email-input").value.trim();
+  const senha = document.getElementById("senha-input").value;
+  loginError.style.display = "none";
+  auth.signInWithEmailAndPassword(email, senha).catch(() => {
+    loginError.style.display = "block";
+  });
+});
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    loginBox.style.display = "none";
+    btnCategorias.disabled = false;
+    btnProdutos.disabled = false;
+    log.innerHTML = "";
+    addLog(`✔ Logado como ${user.email}. Pronto pra migrar.`, "ok");
+  } else {
+    loginBox.style.display = "flex";
+    btnCategorias.disabled = true;
+    btnProdutos.disabled = true;
+  }
+});
+
+btnCategorias.addEventListener("click", async () => {
+  btnCategorias.disabled = true;
+  addLog("▶ Migrando categorias...", "info");
+  let migradas = 0, puladas = 0, erros = 0;
+  const snap = await db.collection("categorias").get();
+  for (const doc of snap.docs) {
+    try {
+      if (Object.prototype.hasOwnProperty.call(doc.data(), "pai")) {
+        addLog(`— Pulado (já tem 'pai'): ${doc.id}`, "skip");
+        puladas++;
+        continue;
+      }
+      await doc.ref.update({ pai: null });
+      addLog(`✔ Categoria migrada: ${doc.id}`, "ok");
+      migradas++;
+    } catch (e) {
+      addLog(`✘ Erro em ${doc.id} — ${e.message}`, "err");
+      erros++;
+    }
+  }
+  addLog(`▶ Categorias: ${migradas} migradas, ${puladas} já estavam ok, ${erros} erros.`, "info");
+  btnCategorias.disabled = false;
+});
+
+btnProdutos.addEventListener("click", async () => {
+  btnProdutos.disabled = true;
+  addLog("▶ Migrando produtos...", "info");
+  let migrados = 0, pulados = 0, erros = 0;
+  const snap = await db.collection("produtos").get();
+  for (const doc of snap.docs) {
+    try {
+      if (Object.prototype.hasOwnProperty.call(doc.data(), "estoque")) {
+        pulados++;
+        continue;
+      }
+      await doc.ref.update({
+        estoque: 0,
+        codigo: null,
+        estoqueMinimo: null,
+        ativo: true,
+        destaque: false,
+        precoAntigo: null,
+        custo: null,
+      });
+      addLog(`✔ Produto migrado: ${doc.id}`, "ok");
+      migrados++;
+    } catch (e) {
+      addLog(`✘ Erro em ${doc.id} — ${e.message}`, "err");
+      erros++;
+    }
+  }
+  addLog(`▶ Produtos: ${migrados} migrados, ${pulados} já estavam ok, ${erros} erros.`, "info");
+  btnProdutos.disabled = false;
+});
+</script>
+</body>
+</html>
