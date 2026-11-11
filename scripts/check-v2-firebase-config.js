@@ -1,0 +1,13 @@
+const fs = require("fs");
+const path = require("path");
+const target = path.join(__dirname, "..", "v2-firebase-config.js");
+const src = fs.readFileSync(target, "utf8");
+const run = new Function("window", "location", "console", src + "\nreturn { firebaseConfig, windowConfig: window.firebaseConfig };");
+const window = {};
+const location = { hostname: "localhost", protocol: "http:" };
+const { firebaseConfig, windowConfig } = run(window, location, console);
+window.firebaseConfig = windowConfig;
+if (firebaseConfig.projectId !== "manejomix-930d1") throw new Error("const firebaseConfig.projectId errado: " + firebaseConfig.projectId);
+if (window.firebaseConfig.projectId !== "manejomix-930d1") throw new Error("window.firebaseConfig.projectId errado: " + window.firebaseConfig.projectId);
+if (window.firebaseConfig !== firebaseConfig) throw new Error("window.firebaseConfig nao aponta pro mesmo objeto");
+console.log("OK: const firebaseConfig e window.firebaseConfig apontam para manejomix-930d1, mesmo objeto");
