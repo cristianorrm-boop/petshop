@@ -18,11 +18,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // E-mails com acesso de administrador (cadastre o mesmo e-mail em Authentication → Users).
-    // ASSUMIDO como "admin@gmail.com" (mesmo e-mail fictício que a usuária reaproveita em
-    // outros projetos, como o RA Modas) — CONFIRMAR o e-mail real cadastrado no
-    // Authentication do projeto manejomix-930d1 antes de publicar.
+    // Confirmado real (login visto em uso): manejomix@gmail.com.
     function emailsAdmin() {
-      return ['admin@gmail.com'];
+      return ['manejomix@gmail.com'];
     }
 
     function isAdmin() {
@@ -123,8 +121,6 @@ service cloud.firestore {
 
 ## Pré-requisito antes de publicar (Fase 5)
 
-1. Confirmar o e-mail administrador real (Authentication → Users do projeto
-   `manejomix-930d1`) e corrigir `emailsAdmin()` acima se for diferente de
-   `admin@gmail.com`.
+1. ~~Confirmar o e-mail administrador real~~ — confirmado: `manejomix@gmail.com`.
 2. Confirmar que o checkout do site (Fase 5) já grava pedidos no formato
    novo antes de publicar — senão nenhum pedido novo consegue ser criado.
