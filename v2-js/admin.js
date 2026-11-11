@@ -420,7 +420,11 @@ document.addEventListener("DOMContentLoaded", () => {
     carregando("produtos");
     const [produtos, categorias] = await Promise.all([DB.produtos.listar(), DB.categorias.listar()]);
     const cats = Object.fromEntries(categorias.map((c) => [c.id, c.nome]));
-    const lista = produtos.filter((p) => p.nome.toLowerCase().includes(buscaProd.toLowerCase())).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    // ordem é extensão própria (fora do schema padrão do loja-online): menor
+    // ordem aparece primeiro, quem não tem vai pro final por nome (ver spec,
+    // decisão #3, e docs/superpowers/plans/2026-11-11-...-fase2-...md).
+    const compararPorOrdem = (a, b) => (a.ordem ?? Infinity) - (b.ordem ?? Infinity) || a.nome.localeCompare(b.nome, "pt-BR");
+    const lista = produtos.filter((p) => p.nome.toLowerCase().includes(buscaProd.toLowerCase())).sort(compararPorOrdem);
     $("#tab-produtos").innerHTML = `
       <div class="cab"><h1>Produtos</h1><div class="barra-acoes"><button class="btn sec" id="exemplos-produtos" title="Adiciona produtos de exemplo de uma loja de acessórios"><i class="fa-solid fa-wand-magic-sparkles"></i> Adicionar exemplos</button><button class="btn" id="novo-produto"><i class="fa-solid fa-plus"></i> Novo produto</button></div></div>
       <div class="filtros"><input id="busca-prod" placeholder="Buscar produto..." value="${esc(buscaProd)}" /></div>
@@ -460,7 +464,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   async function formProduto(id) {
-    const p = id ? await DB.produtos.obter(id) : { nome: "", categoria: "", preco: "", precoAntigo: "", estoque: 0, descricao: "", imagem: "", destaque: false, ativo: true };
+    const p = id ? await DB.produtos.obter(id) : { nome: "", categoria: "", ordem: "", preco: "", precoAntigo: "", estoque: 0, descricao: "", imagem: "", destaque: false, ativo: true };
     const cats = await DB.categorias.listar();
     let imagem = p.imagem;
     abrirModal(id ? "Editar produto" : "Novo produto", `
@@ -469,7 +473,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <label>SKU / código de barras<span class="campo-scan"><input name="codigo" value="${esc(p.codigo || "")}" autocomplete="off" /><button type="button" class="btn sec" id="scan-codigo" title="Ler com a câmera" aria-label="Ler código com a câmera"><i class="fa-solid fa-camera"></i></button></span><small class="dica">Usado para achar o produto no PDV: digitando, com leitor USB ou com a câmera.</small></label>
         <label>Custo (R$) — para lucro nos relatórios<input name="custo" type="number" step="0.01" min="0" value="${p.custo ?? ""}" /></label>
       </div>
-      <label>Categoria<select name="categoria"><option value="">Sem categoria</option>${cats.filter((c) => !c.pai).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).flatMap((c) => [c, ...cats.filter((f) => f.pai === c.id)]).map((c) => `<option value="${esc(c.id)}" ${c.id === p.categoria ? "selected" : ""}>${c.pai ? "↳ " : ""}${esc(c.nome)}</option>`).join("")}</select></label>
+      <div class="grid2">
+        <label>Categoria<select name="categoria"><option value="">Sem categoria</option>${cats.filter((c) => !c.pai).sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")).flatMap((c) => [c, ...cats.filter((f) => f.pai === c.id)]).map((c) => `<option value="${esc(c.id)}" ${c.id === p.categoria ? "selected" : ""}>${c.pai ? "↳ " : ""}${esc(c.nome)}</option>`).join("")}</select></label>
+        <label>Ordem de exibição (opcional)<input name="ordem" type="number" step="1" value="${p.ordem ?? ""}" placeholder="menor = aparece primeiro" /></label>
+      </div>
       <div class="grid2">
         <label>Preço (R$)<input name="preco" type="number" step="0.01" min="0" value="${p.preco}" required /></label>
         <label>Preço antigo (opcional)<input name="precoAntigo" type="number" step="0.01" min="0" value="${p.precoAntigo || ""}" /></label>
@@ -498,7 +505,7 @@ document.addEventListener("DOMContentLoaded", () => {
           .filter((v) => v.nome);
         if (new Set(variantes.map((v) => v.nome.toLowerCase())).size !== variantes.length) { toast("Há variações com o mesmo nome"); return false; }
         const item = {
-          ...p, nome: d.nome.trim(), categoria: d.categoria, preco: parseFloat(d.preco), precoAntigo: parseFloat(d.precoAntigo) || 0,
+          ...p, nome: d.nome.trim(), categoria: d.categoria, ordem: d.ordem === "" ? null : parseInt(d.ordem, 10), preco: parseFloat(d.preco), precoAntigo: parseFloat(d.precoAntigo) || 0,
           estoque: variantes.length ? variantes.reduce((t, v) => t + v.estoque, 0) : parseInt(d.estoque, 10), variantes, estoqueMinimo: d.estoqueMinimo === "" ? null : Math.max(0, parseInt(d.estoqueMinimo, 10) || 0), codigo: d.codigo.trim(), custo: d.custo === "" ? null : parseFloat(d.custo), descricao: d.descricao.trim(), imagem: url || imagem || DB.placeholder("📦", "#e5e7eb"),
           destaque: d.destaque === "on", ativo: d.ativo === "on",
         };
