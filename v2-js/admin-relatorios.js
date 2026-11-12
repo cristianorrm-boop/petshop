@@ -1,15 +1,14 @@
-// Relatórios: vendas (PDV + loja online) e financeiro (contas), com comparação ao período anterior.
+// Relatórios de vendas (PDV + loja online), com comparação ao período anterior.
+// Financeiro (contas a pagar/receber) fora de escopo desta rodada do Manejo Mix.
 // Todos os gráficos são SVG/HTML próprios (sem bibliotecas) e têm tabela equivalente em "Ver tabela".
 window.Admin.modulos.push((A) => {
   const { $, toast, carregando } = A;
   const { moeda, esc } = DB;
 
-  const filtro = { periodo: "30", de: "", ate: "", escopo: "empresa" };
+  const filtro = { periodo: "30", de: "", ate: "" };
   const DIAS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
   const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
 
-  // "Fiado" é o nome antigo da forma "A prazo" (vendas já gravadas continuam válidas)
-  const ehPrazo = (forma) => forma === "A prazo" || forma === "Fiado";
   const pad = (n) => String(n).padStart(2, "0");
   const isoDia = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const dia0 = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -56,7 +55,6 @@ window.Admin.modulos.push((A) => {
         <div class="cab"><h1>Relatórios</h1>
           <div class="barra-acoes no-print">
             <button class="btn sec peq" id="rel-csv-vendas"><i class="fa-solid fa-file-csv"></i> CSV vendas</button>
-            <button class="btn sec peq" id="rel-csv-contas"><i class="fa-solid fa-file-csv"></i> CSV contas</button>
             <button class="btn peq" id="rel-imprimir"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>
           </div>
         </div>
@@ -67,9 +65,6 @@ window.Admin.modulos.push((A) => {
           </select>
           <input type="date" id="rel-de" value="${filtro.de}" ${filtro.periodo === "custom" ? "" : "hidden"} />
           <input type="date" id="rel-ate" value="${filtro.ate}" ${filtro.periodo === "custom" ? "" : "hidden"} />
-          <select id="rel-escopo" title="Contas consideradas no financeiro">
-            ${[["empresa", "Contas: Empresa"], ["pessoal", "Contas: Pessoal"], ["ambos", "Contas: Empresa + Pessoal"]].map(([v, n]) => `<option value="${v}" ${filtro.escopo === v ? "selected" : ""}>${n}</option>`).join("")}
-          </select>
         </div>
         <div id="rel-corpo"></div>`;
       $("#rel-periodo").onchange = (e) => {
@@ -79,10 +74,8 @@ window.Admin.modulos.push((A) => {
       };
       $("#rel-de").onchange = (e) => { filtro.de = e.target.value; gerar(); };
       $("#rel-ate").onchange = (e) => { filtro.ate = e.target.value; gerar(); };
-      $("#rel-escopo").onchange = (e) => { filtro.escopo = e.target.value; gerar(); };
       $("#rel-imprimir").onclick = () => window.print();
       $("#rel-csv-vendas").onclick = () => exportar("vendas");
-      $("#rel-csv-contas").onclick = () => exportar("contas");
     }
     await gerar();
   };
@@ -95,12 +88,12 @@ window.Admin.modulos.push((A) => {
     if (!corpo.innerHTML) corpo.innerHTML = `<p class="vazio">Carregando...</p>`;
     try {
       const p = calcularPeriodo();
-      const [vendas, pedidos, contas, produtos, categorias] = await Promise.all([
+      const [vendas, pedidos, produtos, categorias] = await Promise.all([
         DB.vendas.listarEntre("criadoEm", p.antIni.toISOString(), p.fim.toISOString()),
         DB.pedidos.listarEntre("criadoEm", p.antIni.toISOString(), p.fim.toISOString()),
-        DB.contas.listar(), DB.produtos.listar(), DB.categorias.listar(),
+        DB.produtos.listar(), DB.categorias.listar(),
       ]);
-      ultimo = { p, dados: preparar(p, vendas, pedidos, contas, produtos, categorias) };
+      ultimo = { p, dados: preparar(p, vendas, pedidos, produtos, categorias) };
       corpo.innerHTML = montar(ultimo.p, ultimo.dados);
     } catch (e) {
       console.error(e);
@@ -110,7 +103,7 @@ window.Admin.modulos.push((A) => {
   };
 
   // ---------- Preparação dos dados ----------
-  const preparar = (p, vendas, pedidos, contas, produtos, categorias) => {
+  const preparar = (p, vendas, pedidos, produtos, categorias) => {
     const prod = Object.fromEntries(produtos.map((x) => [x.id, x]));
     const catNome = Object.fromEntries(categorias.map((c) => [c.id, c.nome]));
     const normItens = (itens) => itens.map((i) => ({
@@ -132,14 +125,7 @@ window.Admin.modulos.push((A) => {
     const atual = registros.filter((r) => noPeriodo(r, p.ini, p.fim));
     const anterior = registros.filter((r) => noPeriodo(r, p.antIni, p.antFim));
 
-    const escopoOk = (c) => filtro.escopo === "ambos" || c.escopo === filtro.escopo;
-    const empresaOk = filtro.escopo === "empresa" || filtro.escopo === "ambos";
-    const baixadasEntre = (tipo, ini, fim, soEmpresa) => contas.filter((c) =>
-      c.tipo === tipo && c.status === "pago" && c.pagoEm && (soEmpresa ? c.escopo === "empresa" : escopoOk(c)) &&
-      dataDeIso(c.pagoEm) >= ini && dataDeIso(c.pagoEm) <= fim);
-    const valorConta = (c) => c.valorPago ?? c.valor;
-
-    const metricas = (regs, ini, fim) => {
+    const metricas = (regs) => {
       const receita = arred(regs.reduce((s, r) => s + r.total, 0));
       const qtd = regs.length;
       let lucro = 0, base = 0, baseComCusto = 0;
@@ -150,17 +136,9 @@ window.Admin.modulos.push((A) => {
           if (i.custo != null) { lucro += (i.preco - i.custo) * i.qtd; baseComCusto += i.preco * i.qtd; }
         });
       });
-      const vendasCaixa = empresaOk ? regs.reduce((s, r) => s + r.pagamentos.filter((x) => !ehPrazo(x.forma)).reduce((a, x) => a + x.valor, 0), 0) : 0;
-      const recebidas = baixadasEntre("receber", ini, fim).reduce((s, c) => s + valorConta(c), 0);
-      const saidas = baixadasEntre("pagar", ini, fim).reduce((s, c) => s + valorConta(c), 0);
-      const despesasEmpresa = baixadasEntre("pagar", ini, fim, true).reduce((s, c) => s + valorConta(c), 0);
-      const entradas = vendasCaixa + recebidas;
-      return {
-        receita, qtd, ticket: qtd ? receita / qtd : 0, lucro: arred(lucro), cobertura: base ? baseComCusto / base : 1,
-        entradas: arred(entradas), saidas: arred(saidas), saldo: arred(entradas - saidas), lucroLiquido: arred(lucro - despesasEmpresa),
-      };
+      return { receita, qtd, ticket: qtd ? receita / qtd : 0, lucro: arred(lucro), cobertura: base ? baseComCusto / base : 1 };
     };
-    const m = metricas(atual, p.ini, p.fim), ant = metricas(anterior, p.antIni, p.antFim);
+    const m = metricas(atual), ant = metricas(anterior);
 
     // ---- Séries no tempo ----
     const gran = p.dias <= 31 ? "dia" : p.dias <= 120 ? "semana" : "mes";
@@ -179,43 +157,21 @@ window.Admin.modulos.push((A) => {
     const serie = () => baldes.map(() => 0);
     const somar = (arr, data, v) => { const i = idx.get(chaveDe(data)); if (i != null) arr[i] += v; };
 
-    const sEntradas = serie(), sSaidas = serie(), sPdv = serie(), sOnline = serie();
-    atual.forEach((r) => {
-      somar(r.origem === "PDV" ? sPdv : sOnline, r.data, r.total);
-      if (empresaOk) somar(sEntradas, r.data, r.pagamentos.filter((x) => !ehPrazo(x.forma)).reduce((a, x) => a + x.valor, 0));
-    });
-    baixadasEntre("receber", p.ini, p.fim).forEach((c) => somar(sEntradas, dataDeIso(c.pagoEm), valorConta(c)));
-    baixadasEntre("pagar", p.ini, p.fim).forEach((c) => somar(sSaidas, dataDeIso(c.pagoEm), valorConta(c)));
+    const sPdv = serie(), sOnline = serie();
+    atual.forEach((r) => { somar(r.origem === "PDV" ? sPdv : sOnline, r.data, r.total); });
 
     // ---- Quebras ----
     const agrupar = (fn) => { const o = {}; fn(o); return Object.entries(o).map(([rotulo, v]) => ({ rotulo, ...v })).sort((a, b) => b.valor - a.valor); };
     const porForma = agrupar((o) => atual.forEach((r) => r.pagamentos.forEach((x) => { o[x.forma] = o[x.forma] || { valor: 0, qtd: 0 }; o[x.forma].valor += x.valor; o[x.forma].qtd++; })));
     const porCategoria = agrupar((o) => atual.forEach((r) => r.itens.forEach((i) => { o[i.categoria] = o[i.categoria] || { valor: 0, qtd: 0 }; o[i.categoria].valor += i.preco * i.qtd; o[i.categoria].qtd += i.qtd; })));
     const porProduto = agrupar((o) => atual.forEach((r) => r.itens.forEach((i) => { const k = i.nome; o[k] = o[k] || { valor: 0, qtd: 0 }; o[k].valor += i.preco * i.qtd; o[k].qtd += i.qtd; })));
-    const despesasCat = agrupar((o) => baixadasEntre("pagar", p.ini, p.fim).forEach((c) => { const k = c.categoria || "Sem categoria"; o[k] = o[k] || { valor: 0, qtd: 0 }; o[k].valor += valorConta(c); o[k].qtd++; }));
 
     // ---- Mapa de calor: dia da semana × hora ----
     const calor = Array.from({ length: 7 }, () => Array.from({ length: 24 }, () => ({ valor: 0, qtd: 0 })));
     atual.forEach((r) => { const c = calor[(r.data.getDay() + 6) % 7][r.data.getHours()]; c.valor += r.total; c.qtd++; });
 
-    // ---- Projeção de contas em aberto (próximas 8 semanas) ----
-    const h = dia0(new Date());
-    const semanas = ["Vencidas", ...Array.from({ length: 8 }, (_, i) => curta(addDias(h, i * 7)))];
-    const projReceber = semanas.map(() => 0), projPagar = semanas.map(() => 0);
-    contas.filter((c) => c.status !== "pago" && escopoOk(c)).forEach((c) => {
-      const v = dataDeIso(c.vencimento);
-      const dif = Math.floor((dia0(v) - h) / 86400000);
-      const i = dif < 0 ? 0 : Math.floor(dif / 7) + 1;
-      if (i >= semanas.length) return;
-      (c.tipo === "receber" ? projReceber : projPagar)[i] += c.valor;
-    });
-    const abertas = contas.filter((c) => c.status !== "pago" && escopoOk(c));
-    const aberto = (tipo) => arred(abertas.filter((c) => c.tipo === tipo).reduce((s, c) => s + c.valor, 0));
-    const vencidoPagar = arred(abertas.filter((c) => c.tipo === "pagar" && dataDeIso(c.vencimento) < h).reduce((s, c) => s + c.valor, 0));
-
     return {
-      m, ant, gran, baldes, sEntradas, sSaidas, sPdv, sOnline, porForma, porCategoria, porProduto, despesasCat, calor, semanas, projReceber, projPagar,
-      abertoReceber: aberto("receber"), abertoPagar: aberto("pagar"), vencidoPagar, atual, contasPeriodo: contas.filter(escopoOk),
+      m, ant, gran, baldes, sPdv, sOnline, porForma, porCategoria, porProduto, calor, atual,
       origem: { pdv: arred(sPdv.reduce((a, b) => a + b, 0)), online: arred(sOnline.reduce((a, b) => a + b, 0)) },
     };
   };
@@ -326,7 +282,6 @@ window.Admin.modulos.push((A) => {
     const { m, ant } = d;
     const periodoTxt = `${curta(p.ini)}/${p.ini.getFullYear()} a ${curta(p.fim)}/${p.fim.getFullYear()} (${p.dias} dia${p.dias > 1 ? "s" : ""})`;
     const gr = { dia: "por dia", semana: "por semana", mes: "por mês" }[d.gran];
-    const fluxoTab = d.baldes.map((b, i) => [b.rotulo, moeda(d.sEntradas[i]), moeda(d.sSaidas[i]), moeda(d.sEntradas[i] - d.sSaidas[i])]);
     const origemTab = d.baldes.map((b, i) => [b.rotulo, moeda(d.sPdv[i]), moeda(d.sOnline[i]), moeda(d.sPdv[i] + d.sOnline[i])]);
     const totalOrigem = d.origem.pdv + d.origem.online;
 
@@ -337,21 +292,9 @@ window.Admin.modulos.push((A) => {
         ${kpi("Vendas", m.qtd, delta(m.qtd, ant.qtd))}
         ${kpi("Ticket médio", moeda(m.ticket), delta(m.ticket, ant.ticket))}
         ${kpi("Lucro bruto estimado", moeda(m.lucro), delta(m.lucro, ant.lucro) + (m.cobertura < 0.995 ? `<small class="delta">custo cadastrado em ${(m.cobertura * 100).toFixed(0)}% das vendas</small>` : ""), "Preço − custo dos produtos, menos descontos. Cadastre o custo em Produtos.")}
-        ${kpi("Entradas", moeda(m.entradas), delta(m.entradas, ant.entradas), "Vendas recebidas (exceto a prazo) + contas a receber baixadas")}
-        ${kpi("Saídas", moeda(m.saidas), delta(m.saidas, ant.saidas), "Contas a pagar baixadas no período")}
-        ${kpi("Saldo do período", `<span style="color:${m.saldo < 0 ? "var(--erro)" : "inherit"}">${moeda(m.saldo)}</span>`, delta(m.saldo, ant.saldo))}
-        ${kpi("Lucro após despesas (empresa)", `<span style="color:${m.lucroLiquido < 0 ? "var(--erro)" : "inherit"}">${moeda(m.lucroLiquido)}</span>`, delta(m.lucroLiquido, ant.lucroLiquido), "Lucro bruto estimado − despesas da empresa pagas no período")}
-        ${kpi("A receber (em aberto)", moeda(d.abertoReceber))}
-        ${kpi("A pagar (em aberto)", moeda(d.abertoPagar), d.vencidoPagar ? `<small class="delta" style="color:var(--erro)">${moeda(d.vencidoPagar)} vencido</small>` : "")}
       </div>
 
       <div class="rel-grid">
-        <section class="painel cheio">
-          <h3>Fluxo de caixa: entradas × saídas <small>(${gr})</small></h3>
-          ${barras(d.baldes.map((b) => b.rotulo), [{ nome: "Entradas", cls: "s1", valores: d.sEntradas }, { nome: "Saídas", cls: "s2", valores: d.sSaidas }])}
-          ${tabela(["Período", "Entradas", "Saídas", "Saldo"], fluxoTab)}
-        </section>
-
         <section class="painel cheio">
           <h3>Receita de vendas por origem <small>(${gr})</small></h3>
           ${barras(d.baldes.map((b) => b.rotulo), [{ nome: "PDV", cls: "s1", valores: d.sPdv }, { nome: "Loja online", cls: "s2", valores: d.sOnline }], { empilhado: true })}
@@ -377,32 +320,17 @@ window.Admin.modulos.push((A) => {
           ${tabela(["Produto", "Receita", "Unidades"], d.porProduto.map((i) => [i.rotulo, moeda(i.valor), i.qtd]))}
         </section>
 
-        <section class="painel">
-          <h3>Despesas por categoria <small>(pagas no período)</small></h3>
-          ${ranking(d.despesasCat, { unidade: " conta(s)" })}
-          ${tabela(["Categoria", "Valor", "Contas"], d.despesasCat.map((i) => [i.rotulo, moeda(i.valor), i.qtd]))}
-        </section>
-
         <section class="painel cheio">
           <h3>Horários de maior venda <small>(receita por dia da semana e hora)</small></h3>
           ${mapaCalor(d.calor)}
           ${tabela(["Dia", "Hora", "Vendas", "Receita"], d.calor.flatMap((linha, i) => linha.map((c, h) => [DIAS[i], pad(h) + "h", c.qtd, moeda(c.valor)]).filter((l) => l[2] > 0)))}
         </section>
-
-        <section class="painel cheio">
-          <h3>Projeção: contas em aberto nas próximas semanas</h3>
-          ${barras(d.semanas, [{ nome: "A receber", cls: "s1", valores: d.projReceber }, { nome: "A pagar", cls: "s2", valores: d.projPagar }])}
-          ${tabela(["Semana (início)", "A receber", "A pagar", "Saldo"], d.semanas.map((s, i) => [s, moeda(d.projReceber[i]), moeda(d.projPagar[i]), moeda(d.projReceber[i] - d.projPagar[i])]))}
-        </section>
       </div>
 
       <details class="painel" style="margin-top:14px"><summary style="cursor:pointer"><b>Como os números são calculados</b></summary>
         <ul class="notas">
-          <li><b>Receita de vendas:</b> soma das vendas do PDV e dos pedidos da loja online que não foram cancelados, na data em que foram feitos (inclui vendas a prazo e o frete dos pedidos online).</li>
+          <li><b>Receita de vendas:</b> soma das vendas do PDV e dos pedidos da loja online que não foram cancelados, na data em que foram feitos.</li>
           <li><b>Lucro bruto estimado:</b> (preço − custo) × quantidade dos itens, menos descontos. Só entra o que tem custo cadastrado em Produtos; o aviso mostra a cobertura.</li>
-          <li><b>Entradas:</b> pagamentos recebidos nas vendas (exceto vendas a prazo, que só entram quando a conta a receber é baixada) + contas a receber baixadas no período. O filtro "Contas" define quais contas entram; as vendas contam como empresa.</li>
-          <li><b>Saídas:</b> contas a pagar baixadas no período (pela data do pagamento).</li>
-          <li><b>Lucro após despesas:</b> lucro bruto estimado − despesas da empresa pagas no período.</li>
           <li><b>Comparação:</b> com o período imediatamente anterior, de mesma duração.</li>
         </ul></details>`;
   };
@@ -426,10 +354,6 @@ window.Admin.modulos.push((A) => {
       const linhas = [["Data", "Origem", "Referência", "Cliente", "Produto", "Variação", "Categoria", "Qtd", "Preço unit.", "Total do item", "Custo unit."]];
       d.atual.forEach((r) => r.itens.forEach((i) => linhas.push([r.data.toLocaleString("pt-BR"), r.origem, r.ref, r.cliente, i.nome, i.variante, i.categoria, i.qtd, num(i.preco), num(i.preco * i.qtd), i.custo == null ? "" : num(i.custo)])));
       baixarCsv(`vendas_${sufixo}.csv`, linhas);
-    } else {
-      const linhas = [["Tipo", "Conta", "Descrição", "Parte", "Categoria", "Vencimento", "Valor", "Situação", "Data baixa", "Valor baixado"]];
-      d.contasPeriodo.forEach((c) => linhas.push([c.tipo === "pagar" ? "A pagar" : "A receber", c.escopo, c.descricao, c.parte || "", c.categoria || "", c.vencimento.split("-").reverse().join("/"), num(c.valor), c.status === "pago" ? "Baixada" : "Em aberto", c.pagoEm ? c.pagoEm.split("-").reverse().join("/") : "", c.valorPago != null ? num(c.valorPago) : ""]));
-      baixarCsv(`contas_${sufixo}.csv`, linhas);
     }
   };
 
