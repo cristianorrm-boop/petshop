@@ -1,13 +1,14 @@
-// PDV (frente de caixa): venda, vendas do dia e controle de caixa.
+// PDV (frente de caixa): venda direta e vendas do dia — sem caixa (a loja não abre/fecha caixa) e sem
+// pagamento a prazo (gera conta a receber, módulo de Financeiro fora de escopo desta rodada).
 window.Admin.modulos.push((A) => {
   const { $, toast, tentar, abrirModal, fecharModal, carregando, dataBR } = A;
   const { moeda, esc } = DB;
 
-  const FORMAS = ["Dinheiro", "PIX", "Cartão de Débito", "Cartão de Crédito", "A prazo"];
-  const ICONE = { Dinheiro: "fa-money-bill-wave", PIX: "fa-qrcode", "Cartão de Débito": "fa-credit-card", "Cartão de Crédito": "fa-credit-card", "A prazo": "fa-calendar-days", Fiado: "fa-calendar-days" };
+  const FORMAS = ["Dinheiro", "PIX", "Cartão de Débito", "Cartão de Crédito"];
+  const ICONE = { Dinheiro: "fa-money-bill-wave", PIX: "fa-qrcode", "Cartão de Débito": "fa-credit-card", "Cartão de Crédito": "fa-credit-card" };
 
-  let sub = "venda"; // venda | vendas | caixa
-  let caixa = null, produtos = [], categorias = [];
+  let sub = "venda"; // venda | vendas
+  let produtos = [], categorias = [];
   let cart = [];     // { id, vid, nome, variante, preco, custo, qtd }
   let desconto = { tipo: "valor", valor: 0 };
   let cliente = "", clienteId = "", clientes = [];
@@ -32,15 +33,9 @@ window.Admin.modulos.push((A) => {
   };
 
   // ---------- Estrutura da tela ----------
-  const carregarCaixa = async () => {
-    const snap = await DB.fs.collection("caixas").where("status", "==", "aberto").limit(1).get();
-    caixa = snap.empty ? null : { ...snap.docs[0].data(), id: snap.docs[0].id };
-  };
-
   A.telas.pdv = async () => {
     carregando("pdv");
     [produtos, categorias, clientes] = await Promise.all([DB.produtos.listar(), DB.categorias.listar(), DB.clientes.listar()]);
-    await carregarCaixa();
     desenharBase();
   };
 
@@ -48,7 +43,7 @@ window.Admin.modulos.push((A) => {
     $("#tab-pdv").innerHTML = `
       <div class="cab"><h1>PDV</h1>
         <div class="seg" id="pdv-sub">
-          ${[["venda", "Venda"], ["vendas", "Vendas"], ["caixa", "Caixa"]].map(([k, n]) => `<button type="button" data-sub="${k}" class="${k === sub ? "ativo" : ""}">${n}</button>`).join("")}
+          ${[["venda", "Venda"], ["vendas", "Vendas"]].map(([k, n]) => `<button type="button" data-sub="${k}" class="${k === sub ? "ativo" : ""}">${n}</button>`).join("")}
         </div>
       </div>
       <div id="pdv-corpo"></div>`;
@@ -61,20 +56,10 @@ window.Admin.modulos.push((A) => {
     };
     desenharSub();
   };
-  const desenharSub = () => ({ venda: telaVenda, vendas: telaVendas, caixa: telaCaixa })[sub]();
+  const desenharSub = () => ({ venda: telaVenda, vendas: telaVendas })[sub]();
 
   // ---------- Sub-aba: Venda ----------
   const telaVenda = () => {
-    if (!caixa) {
-      $("#pdv-corpo").innerHTML = `
-        <div class="painel" style="max-width:460px">
-          <h3 style="margin-bottom:6px">Caixa fechado</h3>
-          <p class="dica" style="margin-bottom:12px">Abra o caixa para começar a vender. As vendas ficam vinculadas a ele para o fechamento.</p>
-          <button class="btn" id="ir-caixa"><i class="fa-solid fa-lock-open"></i> Abrir caixa</button>
-        </div>`;
-      $("#ir-caixa").onclick = () => { sub = "caixa"; document.querySelectorAll("#pdv-sub button").forEach((x) => x.classList.toggle("ativo", x.dataset.sub === "caixa")); desenharSub(); };
-      return;
-    }
     $("#pdv-corpo").innerHTML = `
       <div class="pdv">
         <div class="pdv-cat">
@@ -326,33 +311,14 @@ window.Admin.modulos.push((A) => {
   };
 
   // ---------- Recebimento ----------
-  const addDiasIso = (iso, n) => { const d = new Date(iso + "T12:00:00"); d.setDate(d.getDate() + n); return isoDia(d); };
-  const addMesesIso = (iso, n) => {
-    const [y, m, d] = iso.split("-").map(Number);
-    const base = new Date(y, m - 1 + n, 1);
-    const ultimo = new Date(base.getFullYear(), base.getMonth() + 1, 0).getDate();
-    return isoDia(new Date(base.getFullYear(), base.getMonth(), Math.min(d, ultimo)));
-  };
-  const dataCurta = (iso) => iso.split("-").reverse().join("/");
-  const INTERVALOS = { mensal: "Mensal", quinzenal: "Quinzenal (15 dias)", semanal: "Semanal (7 dias)" };
-  // divide `valor` em `n` parcelas (a última absorve os centavos) a partir do 1º vencimento
-  const gerarParcelas = (valor, n, primeiro, intervalo) => {
-    const base = Math.floor((valor / n) * 100) / 100;
-    return Array.from({ length: n }, (_, i) => ({
-      n: i + 1,
-      valor: i === n - 1 ? arred(valor - base * (n - 1)) : base,
-      venc: intervalo === "mensal" ? addMesesIso(primeiro, i) : addDiasIso(primeiro, i * (intervalo === "quinzenal" ? 15 : 7)),
-    }));
-  };
-  const rotuloPagamento = (p) => p.forma + (p.parcelas > 1 ? ` ${p.parcelas}x` : "");
+  const rotuloPagamento = (p) => p.forma;
 
   const receber = () => {
     if (!cart.length) return toast("Adicione itens à venda");
     const t = totais();
     if (t.total <= 0) return toast("Total da venda deve ser maior que zero");
-    let pags = [];       // { forma, valor (aplicado na venda), recebido, [parcelas, intervalo, parcelasLista] }
+    let pags = [];       // { forma, valor (aplicado na venda), recebido }
     let forma = formaRapida || "Dinheiro";
-    const prazo = { parc: 1, venc: addDiasIso(isoDia(), 30), intervalo: "mensal" };
     // PIX e cartões: o valor total já entra lançado, basta concluir (dá para remover e dividir o pagamento)
     if (["PIX", "Cartão de Débito", "Cartão de Crédito"].includes(formaRapida)) pags.push({ forma: formaRapida, valor: t.total, recebido: t.total });
     const pago = () => arred(pags.reduce((s, p) => s + p.valor, 0));
@@ -368,48 +334,9 @@ window.Admin.modulos.push((A) => {
           <div class="pg-troco"><span>Troco a devolver</span><strong id="pg-troco">${moeda(0)}</strong></div>
         </div>
         <button type="button" class="btn" id="pg-add"><i class="fa-solid fa-plus"></i> Adicionar dinheiro</button>`;
-      if (forma === "A prazo") return `
-        <div class="grid2">
-          <label>Valor a prazo (R$)<input type="number" id="pg-valor" min="0.01" step="0.01" value="${falta.toFixed(2)}" /></label>
-          <label>Dividir em (parcelas)<input type="number" id="pg-parc" min="1" max="60" step="1" value="${prazo.parc}" /></label>
-        </div>
-        <div class="grid2">
-          <label>1º vencimento<input type="date" id="pg-venc" value="${prazo.venc}" min="${isoDia()}" /></label>
-          <label>Intervalo<select id="pg-int">${Object.entries(INTERVALOS).map(([k, n]) => `<option value="${k}" ${prazo.intervalo === k ? "selected" : ""}>${n}</option>`).join("")}</select></label>
-        </div>
-        <label>Cliente (obrigatório — a conta a receber fica no nome dele)
-          <input id="pg-cliente" list="pdv-clientes" value="${esc(cliente)}" placeholder="Digite para buscar..." autocomplete="off" /></label>
-        <p class="dica" id="pg-cli-info"></p>
-        <button type="button" class="link-btn" id="pg-novo-cli"><i class="fa-solid fa-user-plus"></i> Cadastrar novo cliente agora</button>
-        <div class="pg-novo-cli" id="pg-novo-cli-box" hidden>
-          <div class="grid2">
-            <label>Nome<input id="pg-nc-nome" autocomplete="off" /></label>
-            <label>Telefone<input id="pg-nc-fone" type="tel" /></label>
-          </div>
-          <button type="button" class="btn sec" id="pg-nc-salvar">Cadastrar e selecionar</button>
-        </div>
-        <div class="pg-prev" id="pg-prev"></div>
-        <button type="button" class="btn" id="pg-add"><i class="fa-solid fa-plus"></i> Adicionar a prazo</button>`;
       return `
         <label>Valor no ${esc(forma)} (R$)<input type="number" id="pg-valor" min="0.01" step="0.01" value="${falta.toFixed(2)}" /></label>
         <button type="button" class="btn" id="pg-add"><i class="fa-solid fa-plus"></i> Adicionar ${esc(forma)}</button>`;
-    };
-
-    const desenharPrevia = () => {
-      const alvo = $("#pg-prev");
-      if (!alvo) return;
-      const v = parseFloat($("#pg-valor").value) || 0, n = Math.min(60, Math.max(1, parseInt($("#pg-parc").value, 10) || 1));
-      if (!(v > 0) || !$("#pg-venc").value) { alvo.innerHTML = ""; return; }
-      const lista = gerarParcelas(Math.min(v, restante()), n, $("#pg-venc").value, $("#pg-int").value);
-      alvo.innerHTML = `<b>Parcelas que serão lançadas em Contas a receber:</b><ul>${lista.map((p) => `<li><span>${p.n}/${n} — ${dataCurta(p.venc)}</span><b>${moeda(p.valor)}</b></li>`).join("")}</ul>`;
-    };
-    const infoCliente = () => {
-      const el = $("#pg-cli-info");
-      if (!el) return;
-      const nome = $("#pg-cliente").value.trim();
-      const c = clientes.find((x) => x.nome.toLowerCase() === nome.toLowerCase());
-      el.textContent = !nome ? "" : c ? "Cliente cadastrado." : "Cliente não cadastrado — use \"Cadastrar novo cliente agora\".";
-      el.style.color = c ? "var(--ok)" : "var(--erro)";
     };
 
     const desenhar = () => {
@@ -422,8 +349,7 @@ window.Admin.modulos.push((A) => {
         </div>
         <ul class="pg-lista">${pags.map((p, i) => `
           <li><span><i class="fa-solid ${ICONE[p.forma]}"></i> ${esc(rotuloPagamento(p))}
-            ${p.recebido > p.valor ? `<small>(recebido ${moeda(p.recebido)})</small>` : ""}
-            ${p.parcelasLista ? `<small>1º venc. ${dataCurta(p.parcelasLista[0].venc)}</small>` : ""}</span>
+            ${p.recebido > p.valor ? `<small>(recebido ${moeda(p.recebido)})</small>` : ""}</span>
             <b>${moeda(p.valor)}</b><button type="button" class="rem-var" data-rpg="${i}" aria-label="Remover">&times;</button></li>`).join("")}</ul>
         ${falta > 0 ? `
           <div class="pg-formas">${FORMAS.map((f) => `<button type="button" class="btn sec ${f === forma ? "ativo" : ""}" data-forma="${esc(f)}"><i class="fa-solid ${ICONE[f]}"></i> ${esc(f)}</button>`).join("")}</div>
@@ -438,23 +364,6 @@ window.Admin.modulos.push((A) => {
       if (forma === "Dinheiro") {
         v.oninput = () => { $("#pg-troco").textContent = moeda(Math.max(0, arred((parseFloat(v.value) || 0) - restante()))); };
         v.oninput();
-      }
-      if (forma === "A prazo") {
-        ["#pg-valor", "#pg-parc", "#pg-venc", "#pg-int"].forEach((s) => {
-          $(s).oninput = $(s).onchange = () => { prazo.parc = parseInt($("#pg-parc").value, 10) || 1; prazo.venc = $("#pg-venc").value; prazo.intervalo = $("#pg-int").value; desenharPrevia(); };
-        });
-        $("#pg-cliente").oninput = infoCliente;
-        $("#pg-novo-cli").onclick = () => { $("#pg-novo-cli-box").hidden = false; $("#pg-nc-nome").value = $("#pg-cliente").value; $("#pg-nc-nome").focus(); };
-        $("#pg-nc-salvar").onclick = async () => {
-          const nome = $("#pg-nc-nome").value.trim();
-          if (!nome) return toast("Informe o nome do cliente");
-          if (clientes.some((x) => x.nome.toLowerCase() === nome.toLowerCase())) return toast("Já existe um cliente com esse nome");
-          let novo = null;
-          if (!(await tentar(async () => { novo = await DB.clientes.salvar({ nome, telefone: $("#pg-nc-fone").value.trim(), criadoEm: new Date().toISOString() }); }))) return;
-          definirCliente(novo, true);
-          $("#pg-cliente").value = novo.nome; $("#pg-novo-cli-box").hidden = true; infoCliente(); toast("Cliente cadastrado");
-        };
-        desenharPrevia(); infoCliente();
       }
     };
 
@@ -477,17 +386,7 @@ window.Admin.modulos.push((A) => {
       const falta = restante();
       const aplicado = arred(Math.min(digitado, falta));
       if (forma !== "Dinheiro" && digitado > falta + 0.009) toast(`Valor ajustado para ${moeda(falta)} (restante)`);
-      if (forma === "A prazo") {
-        const nome = $("#pg-cliente").value.trim();
-        const c = clientes.find((x) => x.nome.toLowerCase() === nome.toLowerCase());
-        if (!c) return toast("Selecione um cliente cadastrado (ou cadastre agora)");
-        const n = Math.min(60, Math.max(1, parseInt($("#pg-parc").value, 10) || 1)), venc = $("#pg-venc").value;
-        if (!venc) return toast("Informe o 1º vencimento");
-        definirCliente(c, true);
-        pags.push({ forma, valor: aplicado, recebido: aplicado, parcelas: n, intervalo: $("#pg-int").value, parcelasLista: gerarParcelas(aplicado, n, venc, $("#pg-int").value) });
-      } else {
-        pags.push({ forma, valor: aplicado, recebido: forma === "Dinheiro" ? digitado : aplicado });
-      }
+      pags.push({ forma, valor: aplicado, recebido: forma === "Dinheiro" ? digitado : aplicado });
       desenhar();
     };
 
@@ -520,24 +419,14 @@ window.Admin.modulos.push((A) => {
       }
       const numero = await DB.proximoNumero("venda");
       venda = await DB.vendas.salvar({
-        numero, criadoEm: new Date().toISOString(), origem: "pdv", status: "concluida", caixaId: caixa.id,
+        numero, criadoEm: new Date().toISOString(), origem: "pdv", status: "concluida", caixaId: "sem-caixa",
         operador: DB.auth.currentUser.email, cliente: cliente.trim(), clienteId: clienteId || "",
         itens: cart.map(({ id, vid, variante, nome, preco, custo, qtd }) => ({ id, vid, variante, nome, preco, custo, qtd })),
         subtotal: t.subtotal, desconto: t.desconto, total: t.total,
-        pagamentos: pags.map(({ forma, valor, parcelas, intervalo, parcelasLista }) => (parcelas ? { forma, valor, parcelas, intervalo, parcelasLista } : { forma, valor })),
+        pagamentos: pags.map(({ forma, valor }) => ({ forma, valor })),
         troco,
       });
       for (const i of cart) await DB.produtos.ajustarEstoque(i.id, -i.qtd, i.vid, { tipo: "venda_pdv", motivo: `Venda PDV #${numero}`, ref: String(numero) });
-      // cada pagamento a prazo vira uma conta a receber por parcela (empresa), no nome do cliente
-      for (const pg of pags.filter((p) => p.parcelasLista)) {
-        const grupoId = DB.fs.collection("contas").doc().id, lote = DB.fs.batch(), n = pg.parcelas;
-        pg.parcelasLista.forEach((pc) => lote.set(DB.fs.collection("contas").doc(), JSON.parse(JSON.stringify({
-          tipo: "receber", escopo: "empresa", descricao: `Venda PDV #${numero}${n > 1 ? ` — parcela ${pc.n}/${n}` : ""}`,
-          parte: cliente.trim(), clienteId: clienteId || "", categoria: "Vendas a prazo", valor: pc.valor, vencimento: pc.venc,
-          status: "pendente", origem: "pdv", vendaId: venda.id, grupoId, criadoEm: new Date().toISOString(),
-        }))));
-        await lote.commit();
-      }
     }, "Não foi possível concluir a venda");
     if (!ok) venda = null;
     if (venda) produtos = await DB.produtos.listar(); // atualiza o estoque exibido
@@ -565,7 +454,7 @@ window.Admin.modulos.push((A) => {
       <tr><td>Subtotal</td><td class="r">${moeda(v.subtotal)}</td></tr>
       ${v.desconto ? `<tr><td>Desconto</td><td class="r">- ${moeda(v.desconto)}</td></tr>` : ""}
       <tr class="b"><td>TOTAL</td><td class="r">${moeda(v.total)}</td></tr>
-      ${v.pagamentos.map((p) => `<tr><td>${esc(rotuloPagamento(p))}</td><td class="r">${moeda(p.valor)}</td></tr>${(p.parcelasLista || []).map((pc) => `<tr><td>&nbsp;&nbsp;${pc.n}/${p.parcelas} venc. ${dataCurta(pc.venc)}</td><td class="r">${moeda(pc.valor)}</td></tr>`).join("")}`).join("")}
+      ${v.pagamentos.map((p) => `<tr><td>${esc(rotuloPagamento(p))}</td><td class="r">${moeda(p.valor)}</td></tr>`).join("")}
       ${v.troco ? `<tr><td>Troco</td><td class="r">${moeda(v.troco)}</td></tr>` : ""}
     </table>
     <div class="l"></div><div class="c">Obrigado pela preferência!</div>
@@ -590,7 +479,6 @@ window.Admin.modulos.push((A) => {
         <p>Subtotal ${moeda(v.subtotal)}${v.desconto ? ` · Desconto -${moeda(v.desconto)}` : ""}</p>
         <p><b>Total ${moeda(v.total)}</b></p>
         <p>${v.pagamentos.map((p) => `${esc(rotuloPagamento(p))} ${moeda(p.valor)}`).join(" · ")}${v.troco ? ` · Troco ${moeda(v.troco)}` : ""}</p>
-        ${v.pagamentos.filter((p) => p.parcelasLista).map((p) => `<p class="dica">A prazo: ${p.parcelasLista.map((pc) => `${pc.n}/${p.parcelas} em ${dataCurta(pc.venc)} (${moeda(pc.valor)})`).join("; ")}</p>`).join("")}
       </div>
       <button type="button" class="btn sec" id="imp-cupom"><i class="fa-solid fa-print"></i> Imprimir cupom</button>`,
       () => {}, { salvar: nova ? "Nova venda" : "Fechar", semCancelar: true });
@@ -629,115 +517,13 @@ window.Admin.modulos.push((A) => {
     const ok = await tentar(async () => {
       for (const i of v.itens) await DB.produtos.ajustarEstoque(i.id, i.qtd, i.vid, { tipo: "cancelamento_pdv", motivo: `Venda PDV #${v.numero} cancelada`, ref: String(v.numero) });
       await DB.vendas.salvar({ ...v, status: "cancelada", canceladaEm: new Date().toISOString(), canceladaPor: DB.auth.currentUser.email });
-      // remove as parcelas a prazo ainda não recebidas (se alguma já foi recebida, avisa)
-      const contas = (await DB.fs.collection("contas").where("vendaId", "==", v.id).get()).docs;
-      for (const c of contas) {
-        if (c.data().status === "pago") toast("Uma parcela a prazo desta venda já foi recebida; ajuste em Contas a receber.");
-        else await DB.contas.remover(c.id);
-      }
     }, "Não foi possível cancelar a venda");
     if (ok) { produtos = await DB.produtos.listar(); toast("Venda cancelada"); telaVendas(); }
   };
 
-  // ---------- Sub-aba: Caixa ----------
-  const resumoCaixa = (c, vendas) => {
-    const validas = vendas.filter((v) => v.status !== "cancelada");
-    const porForma = {};
-    validas.forEach((v) => v.pagamentos.forEach((p) => (porForma[p.forma] = arred((porForma[p.forma] || 0) + p.valor))));
-    const mov = c.movimentos || [];
-    const sang = mov.filter((m) => m.tipo === "sangria").reduce((s, m) => s + m.valor, 0);
-    const supr = mov.filter((m) => m.tipo === "suprimento").reduce((s, m) => s + m.valor, 0);
-    const esperado = arred((c.saldoInicial || 0) + (porForma.Dinheiro || 0) + supr - sang);
-    return { porForma, qtd: validas.length, totalVendas: arred(validas.reduce((s, v) => s + v.total, 0)), sang, supr, esperado };
-  };
-
-  const telaCaixa = async () => {
-    $("#pdv-corpo").innerHTML = `<p class="vazio">Carregando...</p>`;
-    if (!caixa) {
-      const hist = (await DB.caixas.listar()).filter((c) => c.status === "fechado").sort((a, b) => b.abertoEm.localeCompare(a.abertoEm)).slice(0, 10);
-      $("#pdv-corpo").innerHTML = `
-        <div class="painel" style="max-width:460px;margin-bottom:16px">
-          <h3 style="margin-bottom:10px">Abrir caixa</h3>
-          <form id="form-abrir" style="display:grid;gap:10px">
-            <label>Saldo inicial em dinheiro (R$)<input name="saldo" type="number" min="0" step="0.01" value="0" required /></label>
-            <button class="btn"><i class="fa-solid fa-lock-open"></i> Abrir caixa</button>
-          </form>
-        </div>
-        <h3 style="margin-bottom:8px">Últimos fechamentos</h3>
-        <table><thead><tr><th>Abertura</th><th>Fechamento</th><th>Vendas</th><th>Esperado</th><th>Contado</th><th>Diferença</th></tr></thead><tbody>
-        ${hist.map((c) => `<tr><td>${dataBR(c.abertoEm)}</td><td>${dataBR(c.fechadoEm)}</td><td>${moeda(c.resumo?.totalVendas)}</td><td>${moeda(c.esperado)}</td><td>${moeda(c.contado)}</td>
-          <td style="color:${Math.abs(c.diferenca) < 0.01 ? "var(--ok)" : "var(--erro)"}">${moeda(c.diferenca)}</td></tr>`).join("") || `<tr><td colspan="6" class="vazio">Nenhum fechamento ainda.</td></tr>`}
-        </tbody></table>`;
-      $("#form-abrir").onsubmit = async (e) => {
-        e.preventDefault();
-        const saldo = parseFloat(new FormData(e.target).get("saldo")) || 0;
-        if (await tentar(async () => { caixa = await DB.caixas.salvar({ status: "aberto", abertoEm: new Date().toISOString(), abertoPor: DB.auth.currentUser.email, saldoInicial: saldo, movimentos: [] }); })) {
-          toast("Caixa aberto"); sub = "venda"; desenharBase();
-        }
-      };
-      return;
-    }
-    const vendas = (await DB.fs.collection("vendas").where("caixaId", "==", caixa.id).get()).docs.map((d) => ({ ...d.data(), id: d.id }));
-    const r = resumoCaixa(caixa, vendas);
-    $("#pdv-corpo").innerHTML = `
-      <div class="kpis">
-        <div class="kpi"><span>Aberto em</span><strong style="font-size:1.1rem">${dataBR(caixa.abertoEm)}</strong></div>
-        <div class="kpi"><span>Saldo inicial</span><strong>${moeda(caixa.saldoInicial)}</strong></div>
-        <div class="kpi"><span>Vendas (${r.qtd})</span><strong>${moeda(r.totalVendas)}</strong></div>
-        <div class="kpi"><span>Dinheiro esperado</span><strong>${moeda(r.esperado)}</strong></div>
-      </div>
-      <div class="duas">
-        <div class="painel"><h3>Recebido por forma</h3><ul>${Object.entries(r.porForma).map(([f, v]) => `<li><span>${esc(f)}</span><strong>${moeda(v)}</strong></li>`).join("") || "<li>Sem vendas</li>"}</ul></div>
-        <div class="painel"><h3>Movimentos</h3><ul>
-          ${(caixa.movimentos || []).map((m) => `<li><span>${m.tipo === "sangria" ? "Sangria" : "Suprimento"} — ${esc(m.motivo || "")} <small>${dataBR(m.em)}</small></span><strong>${m.tipo === "sangria" ? "-" : "+"} ${moeda(m.valor)}</strong></li>`).join("") || "<li>Nenhum</li>"}</ul></div>
-      </div>
-      <div class="barra-acoes" style="margin-top:14px">
-        <button class="btn sec" id="cx-sangria"><i class="fa-solid fa-arrow-up-from-bracket"></i> Sangria</button>
-        <button class="btn sec" id="cx-suprimento"><i class="fa-solid fa-arrow-down-to-bracket"></i> Suprimento</button>
-        <button class="btn perigo" id="cx-fechar" style="margin-left:auto"><i class="fa-solid fa-lock"></i> Fechar caixa</button>
-      </div>`;
-
-    const movimento = (tipo) => abrirModal(tipo === "sangria" ? "Sangria (retirada de dinheiro)" : "Suprimento (entrada de dinheiro)", `
-      <label>Valor (R$)<input name="valor" type="number" min="0.01" step="0.01" required /></label>
-      <label>Motivo<input name="motivo" placeholder="Ex.: pagamento de fornecedor" /></label>`,
-      async (d) => {
-        const valor = parseFloat(d.valor);
-        if (!(valor > 0)) return false;
-        const novo = { ...caixa, movimentos: [...(caixa.movimentos || []), { tipo, valor, motivo: d.motivo.trim(), em: new Date().toISOString(), por: DB.auth.currentUser.email }] };
-        if (!(await tentar(() => DB.caixas.salvar(novo)))) return false;
-        caixa = novo; toast("Movimento registrado"); telaCaixa();
-      });
-    $("#cx-sangria").onclick = () => movimento("sangria");
-    $("#cx-suprimento").onclick = () => movimento("suprimento");
-    $("#cx-fechar").onclick = () => {
-      abrirModal("Fechar caixa", `
-        <div class="detalhe"><p>Dinheiro esperado no caixa: <b>${moeda(r.esperado)}</b></p>
-          <p class="dica">Saldo inicial + vendas em dinheiro + suprimentos − sangrias.</p></div>
-        <label>Dinheiro contado (R$)<input name="contado" id="cx-contado" type="number" min="0" step="0.01" required /></label>
-        <p id="cx-dif" class="dica"></p>
-        <label>Observações<input name="obs" /></label>`,
-        async (d) => {
-          const contado = parseFloat(d.contado);
-          if (!(contado >= 0)) return false;
-          const fechado = {
-            ...caixa, status: "fechado", fechadoEm: new Date().toISOString(), fechadoPor: DB.auth.currentUser.email,
-            contado, esperado: r.esperado, diferenca: arred(contado - r.esperado), obs: d.obs.trim(),
-            resumo: { porForma: r.porForma, qtd: r.qtd, totalVendas: r.totalVendas, sangrias: r.sang, suprimentos: r.supr },
-          };
-          if (!(await tentar(() => DB.caixas.salvar(fechado)))) return false;
-          caixa = null; novaVenda(); toast("Caixa fechado"); telaCaixa();
-        }, { salvar: "Fechar caixa" });
-      $("#cx-contado").oninput = (e) => {
-        const dif = arred((parseFloat(e.target.value) || 0) - r.esperado);
-        $("#cx-dif").textContent = `Diferença: ${moeda(dif)}`;
-        $("#cx-dif").style.color = Math.abs(dif) < 0.01 ? "var(--ok)" : "var(--erro)";
-      };
-    };
-  };
-
   // ---------- Atalhos de teclado ----------
   document.addEventListener("keydown", (e) => {
-    if ($("#tab-pdv").hidden || sub !== "venda" || !caixa || !$("#modal").hidden) return;
+    if ($("#tab-pdv").hidden || sub !== "venda" || !$("#modal").hidden) return;
     if (e.key === "F2") { e.preventDefault(); $("#pdv-busca")?.focus(); }
     if (e.key === "F4") { e.preventDefault(); receber(); }
   });
