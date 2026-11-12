@@ -22,9 +22,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const estoqueDe = (p, vid) => (temVariantes(p) ? variante(p, vid)?.estoque ?? 0 : p.estoque);
   const chave = (i) => i.id + "|" + i.vid;
   const ativos = () => produtos.filter((p) => p.ativo !== false);
+  // mesmo comparador de Produtos/Categorias e PDV (ordem é extensão própria, fora do schema
+  // padrão do loja-online) — sem isso a loja pública ordena categorias/produtos pela ordem
+  // "crua" do Firestore em vez de respeitar o número que a cliente escolheu.
+  const compararPorOrdem = (a, b) => (a.ordem ?? Infinity) - (b.ordem ?? Infinity) || a.nome.localeCompare(b.nome, "pt-BR");
   // categorias podem ter subcategorias (campo "pai")
-  const filhosDe = (id) => categorias.filter((c) => c.pai === id);
-  const raizes = () => categorias.filter((c) => !c.pai || !categorias.some((x) => x.id === c.pai));
+  const filhosDe = (id) => categorias.filter((c) => c.pai === id).sort(compararPorOrdem);
+  const raizes = () => categorias.filter((c) => !c.pai || !categorias.some((x) => x.id === c.pai)).sort(compararPorOrdem);
   const idsDaCategoria = (id) => [id, ...filhosDe(id).map((c) => c.id)];
   const expandidas = new Set();
   const expandirDe = (id) => {
@@ -173,6 +177,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const qtd = Math.min(24, Math.max(1, parseInt(config.qtdDestaques, 10) || 8));
     let destaques = lista.filter((p) => p.destaque);
     if (!destaques.length) destaques = lista.filter((p) => p.estoque > 0); // sem destaques marcados: mostra os disponíveis
+    destaques = [...destaques].sort((a, b) => Number(b.destaque) - Number(a.destaque) || compararPorOrdem(a, b));
     $("#featured-container").innerHTML = destaques.slice(0, qtd).map(cardHtml).join("");
     $("#home-destaques").hidden = config.mostrarDestaques === false || destaques.length === 0;
     iniciarCarrosseis();
@@ -254,7 +259,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       lista = lista.filter((p) => normalizar(p.nome + " " + (p.descricao || "")).includes(t));
     }
     const ordenadores = {
-      destaque: (a, b) => Number(b.destaque) - Number(a.destaque),
+      destaque: (a, b) => Number(b.destaque) - Number(a.destaque) || compararPorOrdem(a, b),
       menor: (a, b) => a.preco - b.preco,
       maior: (a, b) => b.preco - a.preco,
       nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR"),
