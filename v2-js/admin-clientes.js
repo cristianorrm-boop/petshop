@@ -7,15 +7,26 @@ window.Admin.modulos.push((A) => {
   // Abre o formulário no modal. `depois(clienteSalvo)` é chamado após salvar.
   A.formCliente = (c, depois, inicial) => {
     const nova = !c;
-    c = c || { nome: "", telefone: "", documento: "", email: "", endereco: "", obs: "", ...(inicial || {}) };
+    c = c || { nome: "", telefone: "", documento: "", email: "", endereco: "", obs: "", aniversario: "", pet: "", animais: { cachorro: 0, gato: 0, aves: 0, roedores: 0 }, ...(inicial || {}) };
+    const animais = { cachorro: 0, gato: 0, aves: 0, roedores: 0, ...(c.animais || {}) };
     abrirModal(nova ? "Novo cliente" : "Editar cliente", `
       <label>Nome<input name="nome" value="${esc(c.nome)}" required autocomplete="off" /></label>
       <div class="grid2">
         <label>Telefone / WhatsApp<input name="telefone" type="tel" value="${esc(c.telefone || "")}" placeholder="(81) 99999-9999" /></label>
         <label>CPF / CNPJ<input name="documento" value="${esc(c.documento || "")}" /></label>
       </div>
-      <label>E-mail<input name="email" type="email" value="${esc(c.email || "")}" /></label>
+      <div class="grid2">
+        <label>E-mail<input name="email" type="email" value="${esc(c.email || "")}" /></label>
+        <label>Aniversário<input name="aniversario" type="date" value="${esc(c.aniversario || "")}" /></label>
+      </div>
       <label>Endereço<input name="endereco" value="${esc(c.endereco || "")}" /></label>
+      <label>Bichinho de estimação (nome)<input name="pet" value="${esc(c.pet || "")}" placeholder="Ex.: Rex" /></label>
+      <div class="grid2">
+        <label>Cães<input name="animais_cachorro" type="number" min="0" step="1" value="${animais.cachorro}" /></label>
+        <label>Gatos<input name="animais_gato" type="number" min="0" step="1" value="${animais.gato}" /></label>
+        <label>Aves<input name="animais_aves" type="number" min="0" step="1" value="${animais.aves}" /></label>
+        <label>Roedores<input name="animais_roedores" type="number" min="0" step="1" value="${animais.roedores}" /></label>
+      </div>
       <label>Observações<input name="obs" value="${esc(c.obs || "")}" /></label>`,
       async (d) => {
         const nome = d.nome.trim();
@@ -28,6 +39,11 @@ window.Admin.modulos.push((A) => {
         const ok = await tentar(async () => {
           salvo = await DB.clientes.salvar({
             ...c, nome, telefone: d.telefone.trim(), documento: d.documento.trim(), email: d.email.trim(), endereco: d.endereco.trim(), obs: d.obs.trim(),
+            aniversario: d.aniversario || "", pet: d.pet.trim(),
+            animais: {
+              cachorro: Math.max(0, parseInt(d.animais_cachorro, 10) || 0), gato: Math.max(0, parseInt(d.animais_gato, 10) || 0),
+              aves: Math.max(0, parseInt(d.animais_aves, 10) || 0), roedores: Math.max(0, parseInt(d.animais_roedores, 10) || 0),
+            },
             criadoEm: c.criadoEm || new Date().toISOString(),
           });
         });
@@ -76,12 +92,22 @@ window.Admin.modulos.push((A) => {
   const aoEntrarAnterior = A.aoEntrar;
   A.aoEntrar = async () => { if (aoEntrarAnterior) await aoEntrarAnterior(); A.sincronizarClientes(); };
 
+  // Resumo curto dos bichinhos do cliente para a coluna da listagem (ex.: "Rex · 2 cães, 1 gato")
+  const NOMES_ANIMAIS = { cachorro: "cão", gato: "gato", aves: "ave", roedores: "roedor" };
+  const PLURAIS_ANIMAIS = { cachorro: "cães", gato: "gatos", aves: "aves", roedores: "roedores" };
+  const resumoBichinhos = (c) => {
+    const partes = [];
+    if (c.pet) partes.push(esc(c.pet));
+    const animais = c.animais || {};
+    const qtds = Object.entries(animais).filter(([, n]) => n > 0).map(([tipo, n]) => `${n} ${n === 1 ? NOMES_ANIMAIS[tipo] : PLURAIS_ANIMAIS[tipo]}`);
+    if (qtds.length) partes.push(qtds.join(", "));
+    return partes.join(" · ") || "—";
+  };
+
   A.telas.clientes = async () => {
     carregando("clientes");
     await A.sincronizarClientes();
-    const [clientes, contas] = await Promise.all([DB.clientes.listar(), DB.contas.listar()]);
-    const aberto = {};
-    contas.filter((x) => x.tipo === "receber" && x.status !== "pago" && x.clienteId).forEach((x) => { aberto[x.clienteId] = (aberto[x.clienteId] || 0) + x.valor; });
+    const clientes = await DB.clientes.listar();
     const t = busca.toLowerCase();
     const lista = clientes
       .filter((c) => !t || `${c.nome} ${c.telefone || ""} ${c.documento || ""} ${c.email || ""}`.toLowerCase().includes(t))
@@ -90,7 +116,7 @@ window.Admin.modulos.push((A) => {
     $("#tab-clientes").innerHTML = `
       <div class="cab"><h1>Clientes</h1><button class="btn" id="novo-cliente"><i class="fa-solid fa-user-plus"></i> Novo cliente</button></div>
       <div class="filtros"><input id="busca-cliente" placeholder="Buscar por nome, telefone, CPF/CNPJ ou e-mail..." value="${esc(busca)}" style="min-width:300px" /></div>
-      <table class="tabela-cartoes"><thead><tr><th>Nome</th><th>Telefone</th><th>CPF / CNPJ</th><th>E-mail</th><th>A receber (em aberto)</th><th></th></tr></thead><tbody>
+      <table class="tabela-cartoes"><thead><tr><th>Nome</th><th>Telefone</th><th>CPF / CNPJ</th><th>E-mail</th><th>Bichinho(s)</th><th></th></tr></thead><tbody>
       ${lista.map((c) => {
         const fone = (c.telefone || "").replace(/\D/g, "");
         const inicial = esc((c.nome.trim()[0] || "?").toUpperCase());
@@ -99,7 +125,7 @@ window.Admin.modulos.push((A) => {
           <td data-label="Telefone">${c.telefone ? `<a class="cli-link" href="tel:${esc(fone)}">${esc(c.telefone)}</a>` : "—"}</td>
           <td data-label="CPF / CNPJ">${esc(c.documento || "—")}</td>
           <td data-label="E-mail">${c.email ? `<a class="cli-link" href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : "—"}</td>
-          <td data-label="A receber">${aberto[c.id] ? `<b class="cli-devendo">${moeda(aberto[c.id])}</b>` : "—"}</td>
+          <td data-label="Bichinho(s)">${resumoBichinhos(c)}</td>
           <td class="acoes">
             ${fone ? `<a class="btn sec peq" target="_blank" rel="noopener" href="https://wa.me/${fone.length > 11 ? fone : "55" + fone}" aria-label="Abrir WhatsApp de ${esc(c.nome)}"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ""}
             <button class="btn sec peq" data-edit="${c.id}">Editar</button>
@@ -119,8 +145,7 @@ window.Admin.modulos.push((A) => {
       if (ed) A.formCliente(clientes.find((c) => c.id === ed.dataset.edit), () => A.telas.clientes());
       if (del) {
         const c = clientes.find((x) => x.id === del.dataset.del);
-        const msg = aberto[c.id] ? `${c.nome} tem ${moeda(aberto[c.id])} em contas a receber. As contas continuam existindo, mas sem vínculo com o cadastro. Excluir mesmo assim?` : `Excluir o cliente "${c.nome}"?`;
-        if (confirm(msg) && (await tentar(() => DB.clientes.remover(c.id)))) { toast("Cliente excluído"); A.telas.clientes(); }
+        if (confirm(`Excluir o cliente "${c.nome}"?`) && (await tentar(() => DB.clientes.remover(c.id)))) { toast("Cliente excluído"); A.telas.clientes(); }
       }
     };
   };
