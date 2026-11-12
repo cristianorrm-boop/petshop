@@ -788,8 +788,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ---- Carga inicial ----
   $("#grid").innerHTML = `<p class="vazio">Carregando...</p>`;
   try {
-    [config, produtos, categorias, cupons, fretes] = await Promise.all([
-      DB.config.obter(), DB.produtos.listar(), DB.categorias.listar(), DB.cupons.listar(), DB.fretes.listar(),
+    // Fretes é decisão explícita fora do escopo desta V2 (ver regras.md) — nunca tem
+    // regra no Firestore, então nunca pode entrar neste Promise.all: uma rejeição nele
+    // derrubaria a carga inteira da loja. `fretes` fica no [] padrão declarado acima.
+    [config, produtos, categorias, cupons] = await Promise.all([
+      DB.config.obter(), DB.produtos.listar(), DB.categorias.listar(), DB.cupons.listar(),
     ]);
   } catch (err) {
     console.error(err);
