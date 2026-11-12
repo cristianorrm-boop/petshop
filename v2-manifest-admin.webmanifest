@@ -1,13 +1,13 @@
 {
   "id": "./v2-admin.html",
-  "name": "Loja Online — Administração",
+  "name": "Manejo Mix — Administração",
   "short_name": "Admin",
   "description": "Painel administrativo da loja.",
   "start_url": "./v2-admin.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
+  "theme_color": "#D4A017",
   "lang": "pt-BR",
   "icons": [
     {
