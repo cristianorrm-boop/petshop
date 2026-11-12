@@ -650,29 +650,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const cupons = await DB.cupons.listar();
     $("#tab-cupons").innerHTML = `
       <div class="cab"><h1>Cupons</h1><button class="btn" id="novo-cupom"><i class="fa-solid fa-plus"></i> Novo cupom</button></div>
-      <table><thead><tr><th>Código</th><th>Desconto</th><th>Mínimo</th><th>Situação</th><th></th></tr></thead><tbody>
+      <table><thead><tr><th>Código</th><th>Desconto</th><th>Mínimo</th><th>Validade</th><th>Situação</th><th></th></tr></thead><tbody>
       ${cupons.map((c) => `<tr><td><b>${esc(c.codigo)}</b></td><td>${c.tipo === "percentual" ? c.valor + "%" : moeda(c.valor)}</td><td>${moeda(c.minimo)}</td>
+        <td>${c.validade ? dataBR(c.validade + "T00:00:00") : "—"}</td>
         <td><span class="status ${c.ativo !== false ? "s-ativo" : "s-inativo"}">${c.ativo !== false ? "Ativo" : "Inativo"}</span></td>
-        <td class="acoes"><button class="btn sec peq" data-edit="${c.id}">Editar</button> <button class="btn perigo peq" data-del="${c.id}">Excluir</button></td></tr>`).join("") || `<tr><td colspan="5" class="vazio">Nenhum cupom.</td></tr>`}
+        <td class="acoes"><button class="btn sec peq" data-edit="${c.id}">Editar</button> <button class="btn perigo peq" data-del="${c.id}">Excluir</button></td></tr>`).join("") || `<tr><td colspan="6" class="vazio">Nenhum cupom.</td></tr>`}
       </tbody></table>`;
     $("#novo-cupom").onclick = () => formCupom();
   };
   async function formCupom(id) {
-    const c = id ? await DB.cupons.obter(id) : { codigo: "", tipo: "percentual", valor: "", minimo: 0, ativo: true };
+    const c = id ? await DB.cupons.obter(id) : { codigo: "", tipo: "percentual", valor: "", minimo: 0, validade: "", ativo: true };
     abrirModal(id ? "Editar cupom" : "Novo cupom", `
       <label>Código<input name="codigo" value="${esc(c.codigo)}" required style="text-transform:uppercase" /></label>
       <div class="grid2">
         <label>Tipo<select name="tipo"><option value="percentual" ${c.tipo === "percentual" ? "selected" : ""}>Percentual (%)</option><option value="fixo" ${c.tipo === "fixo" ? "selected" : ""}>Valor fixo (R$)</option></select></label>
         <label>Valor<input name="valor" type="number" step="0.01" min="0.01" value="${c.valor}" required /></label>
       </div>
-      <label>Pedido mínimo (R$)<input name="minimo" type="number" step="0.01" min="0" value="${c.minimo}" /></label>
+      <div class="grid2">
+        <label>Pedido mínimo (R$)<input name="minimo" type="number" step="0.01" min="0" value="${c.minimo}" /></label>
+        <label>Validade (opcional)<input name="validade" type="date" value="${esc(c.validade || "")}" /></label>
+      </div>
       <label class="check"><input type="checkbox" name="ativo" ${c.ativo !== false ? "checked" : ""} /> Cupom ativo</label>`,
       async (d) => {
         const codigo = d.codigo.trim().toUpperCase();
         const valor = parseFloat(d.valor);
         if (d.tipo === "percentual" && valor > 100) { toast("Percentual não pode passar de 100"); return false; }
         if ((await DB.cupons.listar()).some((x) => x.codigo === codigo && x.id !== c.id)) { toast("Já existe um cupom com esse código"); return false; }
-        if (!(await tentar(() => DB.cupons.salvar({ ...c, codigo, tipo: d.tipo, valor, minimo: parseFloat(d.minimo) || 0, ativo: d.ativo === "on" })))) return false;
+        if (!(await tentar(() => DB.cupons.salvar({ ...c, codigo, tipo: d.tipo, valor, minimo: parseFloat(d.minimo) || 0, validade: d.validade || "", ativo: d.ativo === "on" })))) return false;
         abrirTab("cupons"); toast("Cupom salvo");
       });
   }

@@ -663,6 +663,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch { toast("Não foi possível buscar o CEP"); }
   });
 
+  // Cupom com `validade` (YYYY-MM-DD) vencida conta como inválido — mesmo comportamento que o admin.html de hoje já tinha
+  const cupomExpirado = (c) => { const hoje = new Date(); const h = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`; return !!c.validade && c.validade < h; };
+
   $("#aplicar-cupom").addEventListener("click", () => {
     const cod = $("#cupom").value.trim().toUpperCase();
     const msg = $("#cupom-msg");
@@ -670,7 +673,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const { subtotal } = calcular();
     msg.className = "feedback erro";
     if (!cod) { cupom = null; msg.textContent = ""; }
-    else if (!c) { cupom = null; msg.textContent = "Cupom inválido."; }
+    else if (!c || cupomExpirado(c)) { cupom = null; msg.textContent = "Cupom inválido."; }
     else if (subtotal < c.minimo) { cupom = null; msg.textContent = `Pedido mínimo de ${moeda(c.minimo)} para este cupom.`; }
     else { cupom = c; msg.className = "feedback ok"; msg.textContent = `Cupom ${c.codigo} aplicado!`; }
     renderCarrinho();
