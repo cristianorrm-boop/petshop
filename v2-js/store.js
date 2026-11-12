@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   let ordem = "destaque";
   let cupom = null;
   let passo = 1; // etapa do carrinho: 1 produtos, 2 entrega/retirada, 3 pagamento
+  // posição de cada categoria (raiz e filha) na ordem curada pela cliente — ver posicaoCategorias()
+  let posCat = {};
   // Item do carrinho: { id, vid, qtd } — vid é a variante (vazio quando o produto não tem variantes)
   let carrinho = [];
   try { carrinho = JSON.parse(localStorage.getItem("lo_carrinho")) || []; } catch { carrinho = []; }
@@ -30,6 +32,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   const filhosDe = (id) => categorias.filter((c) => c.pai === id).sort(compararPorOrdem);
   const raizes = () => categorias.filter((c) => !c.pai || !categorias.some((x) => x.id === c.pai)).sort(compararPorOrdem);
   const idsDaCategoria = (id) => [id, ...filhosDe(id).map((c) => c.id)];
+  // Achado do review final da Fase 5: `ordem` reinicia em cada categoria (igual ao admin,
+  // ver comentário de compararProdutos em v2-js/admin.js) — por isso a grade principal da
+  // loja ("Todas" ou uma categoria-mãe com subcategorias) precisa agrupar por posição da
+  // categoria antes de desempatar por `ordem`, senão o "ordem:1" de categorias diferentes
+  // fica intercalado na tela.
+  const posicaoCategorias = () => {
+    const pos = {};
+    let i = 0;
+    raizes().forEach((r) => { pos[r.id] = i++; filhosDe(r.id).forEach((f) => { pos[f.id] = i++; }); });
+    return pos;
+  };
   const expandidas = new Set();
   const expandirDe = (id) => {
     const c = categorias.find((x) => x.id === id);
@@ -259,7 +272,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       lista = lista.filter((p) => normalizar(p.nome + " " + (p.descricao || "")).includes(t));
     }
     const ordenadores = {
-      destaque: (a, b) => Number(b.destaque) - Number(a.destaque) || compararPorOrdem(a, b),
+      destaque: (a, b) => Number(b.destaque) - Number(a.destaque) || (posCat[a.categoria] ?? Infinity) - (posCat[b.categoria] ?? Infinity) || compararPorOrdem(a, b),
       menor: (a, b) => a.preco - b.preco,
       maior: (a, b) => b.preco - a.preco,
       nome: (a, b) => a.nome.localeCompare(b.nome, "pt-BR"),
@@ -784,6 +797,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     Splash.fechar();
     return;
   }
+  posCat = posicaoCategorias();
   aplicarConfig();
   montarRegioes();
   aplicarCheckout();

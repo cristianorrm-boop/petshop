@@ -60,8 +60,10 @@
     tituloProdutos: "Produtos",
     subtituloProdutos: "Catálogo completo",
     mostrarZapProdutos: true,
-    // Entrega e retirada
-    entregaAtiva: true,
+    // Entrega e retirada — Fretes fica fora do escopo da V2 do Manejo Mix (a loja atende
+    // hoje só balcão/retirada): sem isso, a loja ofereceria "Entrega" assim que a cliente
+    // salvasse Configurações por qualquer outro motivo, antes do v2-seed-config.html rodar.
+    entregaAtiva: false,
     retiradaAtiva: true,
     taxaEntrega: 10,
     freteGratisAcima: 200,
