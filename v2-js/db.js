@@ -177,8 +177,11 @@
     tipo: info.tipo || "ajuste", qtd: depois - antes, antes, depois, motivo: info.motivo || "", obs: info.obs || "", ref: info.ref || "",
     custoUnit: info.custoUnit ?? null, por: (auth && auth.currentUser && auth.currentUser.email) || "", criadoEm: new Date().toISOString(),
   });
-  // Aplica o novo estoque (da variação `vid` ou do produto) dentro de uma transação e registra a movimentação
+  // Aplica o novo estoque (da variação `vid` ou do produto) dentro de uma transação e registra a movimentação.
+  // Item sem produto correspondente (id vazio — ex.: item de pedido/venda antigo sem casamento
+  // encontrado na migração) é ignorado em silêncio: não há documento certo pra ajustar.
   const gravarEstoque = (id, calcular, vid, info) => {
+    if (!id) return Promise.resolve(null);
     const ref = fs.collection("produtos").doc(id);
     return fs.runTransaction(async (tx) => {
       const d = await tx.get(ref);

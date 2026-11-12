@@ -236,7 +236,8 @@ document.addEventListener("DOMContentLoaded", () => {
   telas.dashboard = async () => {
     carregando("dashboard");
     const [pedidos, produtos, cats, vendasPdv] = await Promise.all([DB.pedidos.listar(), DB.produtos.listar(), DB.categorias.listar(), DB.vendas.listar()]);
-    const pdvValidas = vendasPdv.filter((v) => v.status !== "cancelada");
+    // venda espelho de pedido online antigo (campo pedidoOrigem) já é contada pelo próprio pedido
+    const pdvValidas = vendasPdv.filter((v) => v.status !== "cancelada" && !v.pedidoOrigem);
     const validos = [...pedidos.filter((p) => p.status !== "cancelado"), ...pdvValidas];
     const receita = validos.reduce((s, p) => s + p.total, 0);
     const hoje = new Date().toDateString();
@@ -299,7 +300,11 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // O estoque é baixado quando o pedido é confirmado e devolvido se voltar a "novo" ou for cancelado.
+  // Resalvar o mesmo status (ex.: abrir um pedido antigo já "Entregue" e clicar Salvar sem mudar
+  // nada) não pode mexer em estoque — um pedido migrado tem estoqueBaixado indefinido mesmo já
+  // entregue, e repetir a baixa tiraria do estoque de novo por um pedido que já foi de verdade.
   const mudarStatus = async (p, novo) => {
+    if (novo === p.status) { p.status = novo; await DB.pedidos.atualizar(p); return; }
     const deveBaixar = BAIXA_ESTOQUE.includes(novo);
     if (deveBaixar && !p.estoqueBaixado) {
       for (const i of p.itens) await DB.produtos.ajustarEstoque(i.id, -i.qtd, i.vid, { tipo: "pedido_site", motivo: `Pedido #${p.codigo} confirmado`, ref: p.codigo });
@@ -645,13 +650,18 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ---- Cupons ----
+  // Lê `minimo` com fallback pro campo antigo `valorMinimo` — até o corte final, o admin.html
+  // antigo ainda está em produção e só grava valorMinimo, então não pode depender de quando a
+  // ferramenta de migração rodou por último.
+  const minimoDoCupom = (c) => c.minimo ?? c.valorMinimo ?? 0;
+
   telas.cupons = async () => {
     carregando("cupons");
     const cupons = await DB.cupons.listar();
     $("#tab-cupons").innerHTML = `
       <div class="cab"><h1>Cupons</h1><button class="btn" id="novo-cupom"><i class="fa-solid fa-plus"></i> Novo cupom</button></div>
       <table><thead><tr><th>Código</th><th>Desconto</th><th>Mínimo</th><th>Validade</th><th>Situação</th><th></th></tr></thead><tbody>
-      ${cupons.map((c) => `<tr><td><b>${esc(c.codigo)}</b></td><td>${c.tipo === "percentual" ? c.valor + "%" : moeda(c.valor)}</td><td>${moeda(c.minimo)}</td>
+      ${cupons.map((c) => `<tr><td><b>${esc(c.codigo)}</b></td><td>${c.tipo === "percentual" ? c.valor + "%" : moeda(c.valor)}</td><td>${moeda(minimoDoCupom(c))}</td>
         <td>${c.validade ? dataBR(c.validade + "T00:00:00") : "—"}</td>
         <td><span class="status ${c.ativo !== false ? "s-ativo" : "s-inativo"}">${c.ativo !== false ? "Ativo" : "Inativo"}</span></td>
         <td class="acoes"><button class="btn sec peq" data-edit="${c.id}">Editar</button> <button class="btn perigo peq" data-del="${c.id}">Excluir</button></td></tr>`).join("") || `<tr><td colspan="6" class="vazio">Nenhum cupom.</td></tr>`}
@@ -660,6 +670,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
   async function formCupom(id) {
     const c = id ? await DB.cupons.obter(id) : { codigo: "", tipo: "percentual", valor: "", minimo: 0, validade: "", ativo: true };
+    if (id) c.minimo = minimoDoCupom(c);
     abrirModal(id ? "Editar cupom" : "Novo cupom", `
       <label>Código<input name="codigo" value="${esc(c.codigo)}" required style="text-transform:uppercase" /></label>
       <div class="grid2">
@@ -676,7 +687,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const valor = parseFloat(d.valor);
         if (d.tipo === "percentual" && valor > 100) { toast("Percentual não pode passar de 100"); return false; }
         if ((await DB.cupons.listar()).some((x) => x.codigo === codigo && x.id !== c.id)) { toast("Já existe um cupom com esse código"); return false; }
-        if (!(await tentar(() => DB.cupons.salvar({ ...c, codigo, tipo: d.tipo, valor, minimo: parseFloat(d.minimo) || 0, validade: d.validade || "", ativo: d.ativo === "on" })))) return false;
+        const minimo = parseFloat(d.minimo) || 0;
+        // grava os dois campos até o corte final: admin.html antigo (ainda em produção) só lê valorMinimo
+        if (!(await tentar(() => DB.cupons.salvar({ ...c, codigo, tipo: d.tipo, valor, minimo, valorMinimo: minimo, validade: d.validade || "", ativo: d.ativo === "on" })))) return false;
         abrirTab("cupons"); toast("Cupom salvo");
       });
   }

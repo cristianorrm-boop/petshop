@@ -344,7 +344,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const subtotal = itens.reduce((s, i) => s + i.p.preco * i.qtd, 0);
     let desconto = 0;
     if (cupom) {
-      if (subtotal < cupom.minimo) cupom = null;
+      if (subtotal < minimoDoCupom(cupom)) cupom = null;
       else desconto = Math.min(subtotal, cupom.tipo === "percentual" ? subtotal * cupom.valor / 100 : cupom.valor);
     }
     const retirada = document.querySelector('[name="entrega"]:checked').value === "retirada";
@@ -665,6 +665,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Cupom com `validade` (YYYY-MM-DD) vencida conta como inválido — mesmo comportamento que o admin.html de hoje já tinha
   const cupomExpirado = (c) => { const hoje = new Date(); const h = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`; return !!c.validade && c.validade < h; };
+  // Lê minimo com fallback pro campo antigo valorMinimo — até o corte final o admin.html antigo
+  // ainda está em produção e só grava valorMinimo.
+  const minimoDoCupom = (c) => c.minimo ?? c.valorMinimo ?? 0;
 
   $("#aplicar-cupom").addEventListener("click", () => {
     const cod = $("#cupom").value.trim().toUpperCase();
@@ -674,7 +677,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     msg.className = "feedback erro";
     if (!cod) { cupom = null; msg.textContent = ""; }
     else if (!c || cupomExpirado(c)) { cupom = null; msg.textContent = "Cupom inválido."; }
-    else if (subtotal < c.minimo) { cupom = null; msg.textContent = `Pedido mínimo de ${moeda(c.minimo)} para este cupom.`; }
+    else if (subtotal < minimoDoCupom(c)) { cupom = null; msg.textContent = `Pedido mínimo de ${moeda(minimoDoCupom(c))} para este cupom.`; }
     else { cupom = c; msg.className = "feedback ok"; msg.textContent = `Cupom ${c.codigo} aplicado!`; }
     renderCarrinho();
   });

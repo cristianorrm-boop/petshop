@@ -81,14 +81,19 @@ const addLog = (msg, tipo = "ok") => {
   log.scrollTop = log.scrollHeight;
 };
 
-// mesma função provada em scripts/check-migracao-itens-logic.js
+// mesmas funções provadas em scripts/check-migracao-itens-logic.js e
+// scripts/check-fase4-review-fixes.js
 function casarItem(item, produtos) {
   if (item.id) return { ...item, vid: item.vid || "" };
   const alvo = String(item.nome || "").trim().toLowerCase();
   const produto = produtos.find((p) => String(p.nome || "").trim().toLowerCase() === alvo);
   return { ...item, id: produto ? produto.id : null, vid: "" };
 }
-const precisaMigrar = (itens) => (itens || []).some((i) => !i.id);
+// item nunca processado (não tem a chave `id`) -> precisa rodar a migração.
+// item já processado sem correspondência (id === null) NÃO entra aqui: rodar de novo não
+// resolve, é preciso ação manual (ver itensSemCorrespondencia).
+const precisaMigrar = (itens) => (itens || []).some((i) => !("id" in i));
+const itensSemCorrespondencia = (itens) => (itens || []).filter((i) => i.id === null).map((i) => i.nome);
 
 loginBtn.addEventListener("click", () => {
   const email = document.getElementById("email-input").value.trim();
@@ -147,9 +152,11 @@ btnMigrar.addEventListener("click", async () => {
 
 async function verificarColecao(nome) {
   const snap = await db.collection(nome).get();
-  const aindaSemId = snap.docs.filter((d) => precisaMigrar(d.data().itens));
-  addLog(`${nome}: ${snap.size} documentos, ${aindaSemId.length} ainda com item sem id${aindaSemId.length ? " (" + aindaSemId.map((d) => d.id).join(", ") + ")" : ""}`, aindaSemId.length ? "err" : "ok");
-  return aindaSemId.length;
+  const pendentes = snap.docs.filter((d) => precisaMigrar(d.data().itens));
+  addLog(`${nome}: ${snap.size} documentos, ${pendentes.length} ainda pendente(s) de migrar${pendentes.length ? " (" + pendentes.map((d) => d.id).join(", ") + ")" : ""}`, pendentes.length ? "err" : "ok");
+  const semCorrespondencia = snap.docs.flatMap((d) => itensSemCorrespondencia(d.data().itens).map((nomeItem) => `${d.id}: "${nomeItem}"`));
+  if (semCorrespondencia.length) addLog(`${nome}: ${semCorrespondencia.length} item(ns) sem produto correspondente, não serão migrados sozinhos (${semCorrespondencia.join("; ")})`, "skip");
+  return pendentes.length;
 }
 
 btnVerificar.addEventListener("click", async () => {

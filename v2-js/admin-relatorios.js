@@ -111,14 +111,21 @@ window.Admin.modulos.push((A) => {
       custo: i.custo ?? prod[i.id]?.custo ?? null,
       categoria: catNome[prod[i.id]?.categoria] || "Sem categoria",
     }));
+    // Venda espelho de um pedido online antigo (admin.html gravava as duas) já é contada pelo
+    // próprio pedido abaixo — contar as duas dobraria a receita desses pedidos.
+    const ehVendaEspelhoDePedido = (v) => !!v.pedidoOrigem;
+    // Pedido antigo (script.js) guarda a forma de pagamento em cliente.pagamento, não em
+    // pagamento, e nunca gravou `codigo` — sem o fallback viram "undefined" no relatório.
+    const pagamentoDoPedido = (o) => o.pagamento ?? o.cliente?.pagamento ?? "";
+    const refDoPedido = (o) => "#" + (o.codigo || o.id || "?");
     const registros = [
-      ...vendas.filter((v) => v.status !== "cancelada").map((v) => ({
+      ...vendas.filter((v) => v.status !== "cancelada" && !ehVendaEspelhoDePedido(v)).map((v) => ({
         origem: "PDV", ref: "#" + v.numero, data: new Date(v.criadoEm), total: v.total, desconto: v.desconto || 0, cliente: v.cliente || "",
         itens: normItens(v.itens), pagamentos: v.pagamentos,
       })),
       ...pedidos.filter((o) => o.status !== "cancelado").map((o) => ({
-        origem: "Loja online", ref: "#" + o.codigo, data: new Date(o.criadoEm), total: o.total, desconto: o.desconto || 0, cliente: o.cliente?.nome || "",
-        itens: normItens(o.itens), pagamentos: [{ forma: o.pagamento, valor: o.total }],
+        origem: "Loja online", ref: refDoPedido(o), data: new Date(o.criadoEm), total: o.total, desconto: o.desconto || 0, cliente: o.cliente?.nome || "",
+        itens: normItens(o.itens), pagamentos: [{ forma: pagamentoDoPedido(o), valor: o.total }],
       })),
     ];
     const noPeriodo = (r, ini, fim) => r.data >= ini && r.data <= fim;

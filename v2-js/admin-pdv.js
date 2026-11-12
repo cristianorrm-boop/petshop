@@ -512,10 +512,16 @@ window.Admin.modulos.push((A) => {
     };
   };
 
+  // Só venda gravada pelo próprio V2 (origem "pdv") debitou estoque na hora de vender — vendas
+  // antigas migradas (sem esse campo) nunca tiraram do estoque do sistema novo, então cancelar
+  // não pode devolver nada que não foi tirado.
+  const vendaDebitouEstoqueNoV2 = (v) => v.origem === "pdv";
+
   const cancelarVenda = async (v) => {
-    if (!confirm(`Cancelar a venda #${v.numero}? O estoque será devolvido.`)) return;
+    const devolve = vendaDebitouEstoqueNoV2(v);
+    if (!confirm(`Cancelar a venda #${v.numero}?${devolve ? " O estoque será devolvido." : ""}`)) return;
     const ok = await tentar(async () => {
-      for (const i of v.itens) await DB.produtos.ajustarEstoque(i.id, i.qtd, i.vid, { tipo: "cancelamento_pdv", motivo: `Venda PDV #${v.numero} cancelada`, ref: String(v.numero) });
+      if (devolve) for (const i of v.itens) await DB.produtos.ajustarEstoque(i.id, i.qtd, i.vid, { tipo: "cancelamento_pdv", motivo: `Venda PDV #${v.numero} cancelada`, ref: String(v.numero) });
       await DB.vendas.salvar({ ...v, status: "cancelada", canceladaEm: new Date().toISOString(), canceladaPor: DB.auth.currentUser.email });
     }, "Não foi possível cancelar a venda");
     if (ok) { produtos = await DB.produtos.listar(); toast("Venda cancelada"); telaVendas(); }
