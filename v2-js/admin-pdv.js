@@ -16,6 +16,10 @@ window.Admin.modulos.push((A) => {
   let catAtiva = "all", termo = "";
   let diaVendas = "";
 
+  // mesmo comparador de Produtos/Categorias (ordem é extensão própria, fora do schema
+  // padrão do loja-online) — sem isso os chips de categoria do PDV saem em ordem alfabética
+  // em vez de respeitar o número que a cliente escolheu em Categorias.
+  const compararPorOrdem = (a, b) => (a.ordem ?? Infinity) - (b.ordem ?? Infinity) || a.nome.localeCompare(b.nome, "pt-BR");
   const pad = (n) => String(n).padStart(2, "0");
   const isoDia = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const arred = (v) => Math.round(v * 100) / 100;
@@ -36,6 +40,7 @@ window.Admin.modulos.push((A) => {
   A.telas.pdv = async () => {
     carregando("pdv");
     [produtos, categorias, clientes] = await Promise.all([DB.produtos.listar(), DB.categorias.listar(), DB.clientes.listar()]);
+    categorias = [...categorias].sort(compararPorOrdem);
     desenharBase();
   };
 
