@@ -12,13 +12,16 @@ self.addEventListener("install", (e) => {
 });
 
 self.addEventListener("activate", (e) => {
-  // `caches` é por ORIGEM, não por escopo do service worker — mesmo com o
-  // registro restrito a "./v2-", um cleanup "apaga tudo que não for a minha
-  // versão" apagaria também os caches do site atual (sw.js/sw-admin.js).
-  // Por isso só mexe em chaves que comecem com "manejomix-v2-".
+  // Achado do review final do corte: até o corte, o V1 (sw.js/sw-admin.js) convivia
+  // com o V2 e só se apagava cache que começasse com "manejomix-v2-", pra nunca tocar
+  // nos caches do V1 ("manejo-mix-shell-v2"/"manejo-mix-admin-shell-v2"). Agora que o
+  // V2 é o site inteiro, esses caches do V1 não servem pra nada — e, sem apagá-los, um
+  // cliente que visitou antes do corte e fica offline pode receber a página V1 antiga
+  // guardada neles (ver fallback do fetch abaixo). Agora apaga qualquer cache que não
+  // seja da versão atual.
   e.waitUntil(
     caches.keys()
-      .then((ks) => Promise.all(ks.filter((k) => k.startsWith("manejomix-v2-") && k !== VERSAO).map((k) => caches.delete(k))))
+      .then((ks) => Promise.all(ks.filter((k) => k !== VERSAO).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -35,6 +38,8 @@ self.addEventListener("fetch", (e) => {
         if (res.ok) { const copia = res.clone(); caches.open(VERSAO).then((c) => c.put(req, copia)); }
         return res;
       })
-      .catch(() => caches.match(req).then((r) => r || (req.mode === "navigate" ? caches.match("v2-index.html") : Response.error())))
+      // offline: busca só no cache da versão atual — nunca num cache antigo que algum
+      // cliente ainda tenha guardado de antes do corte (ver comentário do activate).
+      .catch(() => caches.open(VERSAO).then((c) => c.match(req)).then((r) => r || (req.mode === "navigate" ? caches.open(VERSAO).then((c2) => c2.match("v2-index.html")) : Response.error())))
   );
 });
