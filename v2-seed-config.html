@@ -91,6 +91,11 @@ const PADROES_MANEJO_MIX = {
   corPrimaria: "#D4A017",
   corSecundaria: "#4A0E0E",
   corDestaque: "#E8B923",
+  // Fretes (entrega) fica fora do escopo desta migração — a loja atende hoje só
+  // balcão/retirada (ver docs/superpowers/specs/2026-11-10-migracao-manejo-mix-v2-design.md,
+  // "Módulos que FICAM DE FORA"). Sem isso, a loja nasceria oferecendo "Entrega" por padrão.
+  entregaAtiva: false,
+  retiradaAtiva: true,
   retiradaDias: [0, 1, 2, 3, 4, 5, 6],
   retiradaHoraInicio: "08:00",
   retiradaHoraFim: "18:00",
