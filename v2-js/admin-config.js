@@ -3,6 +3,10 @@
 window.Admin.modulos.push((A) => {
   const { $, toast, tentar } = A;
   const { esc, auth } = DB;
+  // Impressora térmica e aviso de pedido novo não foram copiados do loja-online
+  // (a cliente não tem esse equipamento); configMudou segue existindo como
+  // no-op porque admin-estoque.js e este próprio módulo chamam depois de salvar.
+  A.configMudou = A.configMudou || (() => {});
 
   const SECOES = [
     ["loja", "Loja e contato", "fa-store"],
@@ -250,43 +254,7 @@ window.Admin.modulos.push((A) => {
       <form class="painel cfg-form" id="form-config" novalidate>
         ${SECOES.map(([k]) => `<section class="cfg-secao" data-secao="${k}" ${k === secaoAtual ? "" : "hidden"}>${secoes[k]}</section>`).join("")}
         <div class="cfg-barra"><span class="dica" id="cfg-estado"></span><button class="btn" id="cfg-salvar"><i class="fa-solid fa-floppy-disk"></i> Salvar configurações</button></div>
-      </form>
-      <div class="painel" id="painel-impressora" ${secaoAtual === "loja" ? "" : "hidden"} style="margin-top:16px;max-width:900px">
-        <h3 style="margin-bottom:4px"><i class="fab fa-bluetooth-b"></i> Impressora e avisos de pedido</h3>
-        <p class="dica" style="margin-bottom:12px">A conexão vale só para este navegador/aparelho. Ligue a impressora e deixe o painel aberto para imprimir sozinho.</p>
-
-        <div class="imp-status" id="imp-status"></div>
-        <div class="barra-acoes" style="margin:10px 0">
-          <button type="button" class="btn" id="imp-ble"><i class="fab fa-bluetooth-b"></i> Conectar impressora Bluetooth</button>
-          <button type="button" class="btn sec" id="imp-serial"><i class="fa-solid fa-plug"></i> Conectar por porta serial</button>
-          <button type="button" class="btn sec" id="imp-teste"><i class="fa-solid fa-print"></i> Imprimir teste</button>
-          <button type="button" class="btn sec" id="imp-desconectar"><i class="fa-solid fa-link-slash"></i> Desconectar</button>
-        </div>
-        <details class="imp-ajuda"><summary>Qual botão usar? Compatibilidade</summary>
-          <ul>
-            <li><b>Conectar impressora Bluetooth</b>: impressoras térmicas Bluetooth <b>BLE</b> (Bluetooth de baixa energia). Funciona no Chrome ou Edge, no computador e no Android.</li>
-            <li><b>Conectar por porta serial</b>: impressoras Bluetooth <b>clássicas</b> (as mais comuns de 58 mm). No Windows, primeiro pareie a impressora em Configurações → Bluetooth; ela cria uma porta COM, que você escolhe aqui. Só no Chrome ou Edge do computador.</li>
-            <li>iPhone/iPad (Safari) não permitem conectar impressoras direto pelo navegador.</li>
-            <li>Se a impressora estiver instalada no sistema, também dá para usar "Imprimir / PDF" nos pedidos e o botão de imprimir cupom do PDV, que abrem a janela de impressão normal.</li>
-          </ul>
-        </details>
-
-        <div class="cfg-grade" style="margin-top:12px">
-          ${escolha("Largura do papel", "impressoraLargura", c.impressoraLargura, [[32, "58 mm (32 colunas)"], [48, "80 mm (48 colunas)"]])}
-        </div>
-        <h4 class="cfg-sub">Impressão automática</h4>
-        ${marcar("Imprimir automaticamente quando chegar um pedido pelo site", "impressaoAutoSite", c.impressaoAutoSite, "Imprime o pedido assim que ele chega, com o painel aberto.")}
-        ${marcar("Imprimir automaticamente o cupom das vendas do PDV", "impressaoAutoPdv", c.impressaoAutoPdv, "Imprime o cupom assim que a venda é concluída.")}
-        <h4 class="cfg-sub">Avisos de pedido do site</h4>
-        ${marcar("Avisar quando chegar um pedido pelo site", "avisoPedidoSite", c.avisoPedidoSite, "Mostra um aviso na tela, pisca o título da aba e (se permitido) envia uma notificação do navegador.")}
-        ${marcar("Tocar um som no aviso", "avisoSom", c.avisoSom)}
-        <div class="barra-acoes" style="margin-top:8px">
-          <button type="button" class="btn sec" id="aviso-permissao"><i class="fa-regular fa-bell"></i> Ativar notificações do navegador</button>
-          <button type="button" class="btn sec" id="aviso-teste">Testar aviso</button>
-          <span class="dica" id="aviso-estado"></span>
-        </div>
-        <p class="dica" style="margin-top:8px">Os avisos funcionam enquanto o painel estiver aberto no navegador (pode ficar em segundo plano). Com o painel fechado não há aviso.</p>
-      </div>`;
+      </form>`;
 
     const form = $("#form-config");
     $("#site-url").textContent = enderecoSite(c) || "Endereço indisponível (painel aberto como arquivo)";
@@ -310,7 +278,6 @@ window.Admin.modulos.push((A) => {
       secaoAtual = k;
       document.querySelectorAll("#cfg-abas button").forEach((b) => b.classList.toggle("ativo", b.dataset.secao === k));
       form.querySelectorAll(".cfg-secao").forEach((s) => { s.hidden = s.dataset.secao !== k; });
-      $("#painel-impressora").hidden = k !== "loja"; // impressora e avisos só aparecem na primeira aba
       const ativa = document.querySelector("#cfg-abas .ativo");
       if (ativa && ativa.scrollIntoView) ativa.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
     };
@@ -432,58 +399,5 @@ window.Admin.modulos.push((A) => {
       }
       $("#cfg-salvar").disabled = false;
     };
-
-    // ---- impressora e avisos: cada opção é salva na hora ----
-    const salvarOpcao = async (chave, valor) => {
-      if (!(await tentar(() => DB.config.salvar({ ...c, [chave]: valor }), "Não foi possível salvar"))) return false;
-      c[chave] = valor; A.configMudou({ [chave]: valor });
-      toast("Salvo");
-      return true;
-    };
-    const painel = $("#painel-impressora");
-    ["impressaoAutoSite", "impressaoAutoPdv", "avisoPedidoSite", "avisoSom"].forEach((n) => {
-      painel.querySelector(`[name="${n}"]`).onchange = async (e) => { if (!(await salvarOpcao(n, e.target.checked))) e.target.checked = !e.target.checked; };
-    });
-    painel.querySelector('[name="impressoraLargura"]').onchange = (e) => salvarOpcao("impressoraLargura", parseInt(e.target.value, 10) === 48 ? 48 : 32);
-
-    const imp = A.impressora, sup = imp.suporte();
-    const atualizarStatus = () => {
-      const ok = imp.conectada();
-      $("#imp-status").innerHTML = ok
-        ? `<span class="status s-ativo"><i class="fab fa-bluetooth-b"></i> Conectada</span> <b>${esc(imp.nome())}</b>`
-        : `<span class="status s-inativo">Desconectada</span> <span class="dica">Nenhuma impressora conectada neste navegador.</span>`;
-      $("#imp-desconectar").hidden = !ok;
-      $("#imp-teste").disabled = !ok;
-    };
-    if (A._desinscreverImpressora) A._desinscreverImpressora();
-    A._desinscreverImpressora = imp.aoMudar(atualizarStatus);
-    atualizarStatus();
-    $("#imp-ble").disabled = !sup.ble; $("#imp-ble").title = sup.ble ? "" : "Este navegador não suporta Bluetooth (use Chrome ou Edge)";
-    $("#imp-serial").disabled = !sup.serial; $("#imp-serial").title = sup.serial ? "" : "Este navegador não suporta porta serial (use Chrome ou Edge no computador)";
-
-    const conectar = (fn, ok) => async (e) => {
-      const botao = e.currentTarget; // guarda antes do await (depois dele o evento já terminou)
-      botao.disabled = true;
-      try { await fn(); toast(ok); }
-      catch (err) { if (err && err.name !== "NotFoundError") toast(err.message || "Não foi possível conectar"); } // NotFoundError = o usuário fechou a janela de escolha
-      finally { botao.disabled = false; atualizarStatus(); $("#imp-ble").disabled = !sup.ble; $("#imp-serial").disabled = !sup.serial; }
-    };
-    $("#imp-ble").onclick = conectar(() => imp.conectarBle(), "Impressora conectada");
-    $("#imp-serial").onclick = conectar(() => imp.conectarSerial(), "Impressora conectada");
-    $("#imp-desconectar").onclick = async () => { await imp.desconectar(); toast("Impressora desconectada"); };
-    $("#imp-teste").onclick = async () => { try { await imp.testar(); toast("Teste enviado para a impressora"); } catch (err) { toast("Não foi possível imprimir: " + (err.message || "erro")); } };
-
-    const estadoNotif = () => {
-      $("#aviso-estado").textContent = !("Notification" in window) ? "Este navegador não suporta notificações."
-        : Notification.permission === "granted" ? "Notificações do navegador: ativadas."
-        : Notification.permission === "denied" ? "Notificações bloqueadas no navegador (libere nas permissões do site)." : "Notificações do navegador: ainda não ativadas.";
-    };
-    estadoNotif();
-    $("#aviso-permissao").onclick = async () => {
-      if (!("Notification" in window)) return toast("Este navegador não suporta notificações.");
-      try { await Notification.requestPermission(); } catch { /* ignorado */ }
-      estadoNotif();
-    };
-    $("#aviso-teste").onclick = () => A.avisoTeste();
   };
 });

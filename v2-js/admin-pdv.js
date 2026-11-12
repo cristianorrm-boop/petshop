@@ -466,7 +466,6 @@ window.Admin.modulos.push((A) => {
         const venda = await finalizar(t, pags, troco());
         if (!venda) return false;
         novaVenda();
-        autoImprimir(venda);
         setTimeout(() => { telaVenda(); mostrarRecibo(venda, true); }, 0);
       }, { salvar: "Concluir venda", largo: true });
 
@@ -573,24 +572,14 @@ window.Admin.modulos.push((A) => {
     <div class="no"><button onclick="window.print()">Imprimir</button></div>
     <script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script></body></html>`;
 
-  // Imprime direto na térmica Bluetooth quando conectada; senão abre a janela de impressão do navegador
+  // Impressora térmica não entra nesta rodada (a cliente não tem esse equipamento);
+  // abre a janela de impressão normal do navegador em vez de ligar numa térmica Bluetooth.
   const imprimirCupom = async (v) => {
-    if (A.impressora && A.impressora.conectada()) {
-      try { await A.impressora.cupomVenda(v); toast("Cupom enviado para a impressora"); return; }
-      catch (e) { toast("Falha na impressora (" + (e.message || "erro") + "). Abrindo a impressão do navegador."); }
-    }
     const cfg = await DB.config.obter();
     const w = window.open("", "_blank", "width=380,height=640");
     if (!w) return toast("Permita pop-ups para imprimir");
     w.document.write(htmlCupom(v, cfg));
     w.document.close();
-  };
-
-  // Impressão automática das vendas (Configurações → Impressora)
-  const autoImprimir = async (venda) => {
-    if (!(A.config && A.config.impressaoAutoPdv)) return;
-    if (!A.impressora || !A.impressora.conectada()) { toast("Impressão automática ligada, mas a impressora não está conectada."); return; }
-    try { await A.impressora.cupomVenda(venda); } catch (e) { toast("Não foi possível imprimir o cupom: " + (e.message || "erro")); }
   };
 
   const mostrarRecibo = (v, nova) => {

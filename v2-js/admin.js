@@ -385,7 +385,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <p style="font-size:.8rem;color:var(--suave)">O estoque é baixado ao confirmar o pedido e devolvido se ele for cancelado. O cliente vê o status em "Acompanhar pedido".</p>
       <div class="barra-acoes">
         <button type="button" class="btn sec peq" id="imprimir-pedido"><i class="fa-solid fa-print"></i> Imprimir / PDF</button>
-        <button type="button" class="btn sec peq" id="imprimir-termica"><i class="fa-solid fa-receipt"></i> Cupom na térmica</button>
         <button type="button" class="btn sec peq" id="avisar-cliente"><i class="fab fa-whatsapp"></i> Avisar cliente</button>
         <button type="button" class="btn perigo peq" id="excluir-pedido">Excluir</button>
       </div>`,
@@ -394,10 +393,6 @@ document.addEventListener("DOMContentLoaded", () => {
         abrirTab("pedidos"); toast("Pedido atualizado");
       });
     $("#imprimir-pedido").onclick = () => imprimirPedido(p);
-    $("#imprimir-termica").onclick = async () => {
-      if (!window.Admin.impressora || !window.Admin.impressora.conectada()) return toast("Conecte a impressora em Configurações.");
-      try { await window.Admin.impressora.pedidoSite(p); toast("Pedido enviado para a impressora"); } catch (e) { toast("Não foi possível imprimir: " + (e.message || "erro")); }
-    };
     $("#avisar-cliente").onclick = async () => {
       const fone = foneWhats(p.cliente.telefone);
       if (!fone) return toast("Cliente sem telefone");
