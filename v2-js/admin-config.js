@@ -26,7 +26,7 @@ window.Admin.modulos.push((A) => {
   const area = (rot, nome, v, linhas = 2, dica = "") => `<label>${rot}<textarea name="${nome}" rows="${linhas}">${esc(v ?? "")}</textarea>${dica ? `<small class="dica">${dica}</small>` : ""}</label>`;
   const marcar = (rot, nome, on, dica = "") => `<label class="check"><input type="checkbox" name="${nome}" ${on ? "checked" : ""} /> <span>${rot}${dica ? `<small class="dica">${dica}</small>` : ""}</span></label>`;
   const escolha = (rot, nome, atual, opcoes, dica = "") => `<label>${rot}<select name="${nome}">${opcoes.map(([v, t]) => `<option value="${v}" ${String(v) === String(atual) ? "selected" : ""}>${t}</option>`).join("")}</select>${dica ? `<small class="dica">${dica}</small>` : ""}</label>`;
-  const cor = (rot, nome, v) => `<label class="cor-campo">${rot}<span><input type="color" name="${nome}" value="${esc(v)}" /><code>${esc(v)}</code></span></label>`;
+  const cor = (rot, nome, v) => `<label class="cor-campo">${rot}<span><input type="color" name="${nome}" value="${esc(v)}" /><input type="text" class="cor-hex" data-cor="${nome}" value="${esc(v)}" maxlength="7" autocapitalize="off" autocomplete="off" aria-label="Código da cor em hexadecimal" /></span></label>`;
   const grade = (...itens) => `<div class="cfg-grade">${itens.join("")}</div>`;
   const titulo = (t, dica = "") => `<h3 class="cfg-sub">${t}</h3>${dica ? `<p class="dica">${dica}</p>` : ""}`;
 
@@ -295,12 +295,20 @@ window.Admin.modulos.push((A) => {
       prev.style.setProperty("--rr", { reto: "4px", suave: "10px", arredondado: "20px" }[v("cantos")] || "10px");
       prev.style.fontFamily = { sistema: "system-ui, sans-serif", elegante: "Georgia, serif", moderna: '"Trebuchet MS", sans-serif' }[v("fonte")];
       $("#pl-nome").textContent = v("nomeLoja") || "Loja";
-      form.querySelectorAll('input[type="color"]').forEach((i) => { const code = i.parentElement.querySelector("code"); if (code) code.textContent = i.value; });
     };
+    // Cada cor tem a bolinha (type=color) e um campo de texto com o hex. Arrastar na bolinha
+    // é impreciso para acertar um código exato — o campo de texto permite colar/digitar.
+    const sincronizarCorTexto = (nome, valor) => { const hex = form.querySelector(`.cor-hex[data-cor="${nome}"]`); if (hex) hex.value = valor; };
+    form.querySelectorAll('input[type="color"]').forEach((i) => {
+      i.addEventListener("input", () => sincronizarCorTexto(i.name, i.value));
+      const hex = form.querySelector(`.cor-hex[data-cor="${i.name}"]`);
+      if (!hex) return;
+      hex.addEventListener("input", () => { if (/^#[0-9a-fA-F]{6}$/.test(hex.value)) { i.value = hex.value; atualizarPrevia(); } });
+    });
     form.addEventListener("input", atualizarPrevia);
     atualizarPrevia();
     $("#cores-padrao").onclick = () => {
-      ["corPrimaria", "corSecundaria", "corDestaque", "corFundo", "corTexto"].forEach((n) => { form.elements[n].value = padrao[n]; });
+      ["corPrimaria", "corSecundaria", "corDestaque", "corFundo", "corTexto"].forEach((n) => { form.elements[n].value = padrao[n]; sincronizarCorTexto(n, padrao[n]); });
       atualizarPrevia(); sujo();
     };
 
