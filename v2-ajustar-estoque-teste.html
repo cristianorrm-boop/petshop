@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ajuste de estoque para teste — Manejo Mix</title>
+  <!-- Ferramenta avulsa (pós-corte): os produtos migrados vieram com estoque 0 (o catálogo
+       antigo nunca registrou contagem real), o que impede testar o checkout de verdade na
+       loja nova. Dá pra cada produto ATIVO com estoque <= 0 (e cada variante dele, se tiver)
+       uma contagem de teste, sem nunca tocar em produto que já tenha estoque > 0 (ou seja,
+       já contado de verdade por alguém). Registra cada ajuste em "movimentos" com motivo
+       explícito, do mesmo jeito que DB.produtos.definirEstoque faria pelo admin, pra ficar
+       rastreável no histórico/relatórios depois. Pode rodar quantas vezes quiser: produtos
+       já ajustados (estoque > 0) são pulados nas próximas vezes. -->
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #eee; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
+    h1 { font-size: 1.4rem; margin-bottom: 8px; color: #D4A017; text-align: center; }
+    p  { font-size: .9rem; color: #aaa; margin-bottom: 24px; text-align: center; max-width: 560px; }
+    .linha { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .linha label { font-size: .9rem; color: #ccc; }
+    .linha input[type="number"] { width: 80px; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #eee; font-size: 1rem; text-align: center; }
+    button.acao { padding: 14px 28px; background: #D4A017; color: #000; font-size: 1rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; transition: opacity .2s; }
+    button.acao:disabled { opacity: .45; cursor: not-allowed; }
+    #log  { margin-top: 24px; width: 100%; max-width: 560px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 16px; font-size: .8rem; font-family: monospace; max-height: 400px; overflow-y: auto; }
+    #login-box { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; margin-bottom: 20px; }
+    #login-box input { padding: 12px; border-radius: 6px; border: 1px solid #333; background: #1a1a1a; color: #eee; font-size: .9rem; }
+    #login-error { color: #f44336; font-size: .8rem; display: none; }
+    .ok   { color: #4caf50; }
+    .err  { color: #f44336; }
+    .info { color: #90caf9; }
+    .skip { color: #888; }
+  </style>
+</head>
+<body>
+
+<h1>📦 Ajuste de estoque para teste</h1>
+<p>Faça login com o usuário admin. Dá uma contagem de teste só nos produtos ATIVOS que hoje
+   estão com estoque zerado — nenhum produto que já tenha estoque de verdade é tocado. Cada
+   ajuste fica registrado no histórico de movimentos, igual se fosse feito pelo admin.</p>
+
+<div id="login-box">
+  <input type="email" id="email-input" placeholder="E-mail do admin">
+  <input type="password" id="senha-input" placeholder="Senha">
+  <button id="login-btn">🔐 Entrar</button>
+  <span id="login-error">E-mail ou senha inválidos.</span>
+</div>
+
+<div class="linha">
+  <label for="qtd-input">Estoque de teste por produto:</label>
+  <input type="number" id="qtd-input" value="5" min="1" max="999" step="1">
+</div>
+<div class="linha">
+  <button class="acao" id="btn-rodar" disabled>▶ Ajustar produtos zerados</button>
+</div>
+
+<div id="log"><span class="info">Faça login para habilitar.</span></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="./v2-firebase-config.js"></script>
+
+<script>
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const log = document.getElementById("log");
+const btnRodar = document.getElementById("btn-rodar");
+const qtdInput = document.getElementById("qtd-input");
+const loginBtn = document.getElementById("login-btn");
+const loginBox = document.getElementById("login-box");
+const loginError = document.getElementById("login-error");
+
+const addLog = (msg, tipo = "ok") => {
+  const span = document.createElement("span");
+  span.className = tipo;
+  span.textContent = msg;
+  log.appendChild(span);
+  log.appendChild(document.createElement("br"));
+  log.scrollTop = log.scrollHeight;
+};
+
+loginBtn.addEventListener("click", () => {
+  const email = document.getElementById("email-input").value.trim();
+  const senha = document.getElementById("senha-input").value;
+  loginError.style.display = "none";
+  auth.signInWithEmailAndPassword(email, senha).catch(() => {
+    loginError.style.display = "block";
+  });
+});
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    loginBox.style.display = "none";
+    btnRodar.disabled = false;
+    log.innerHTML = "";
+    addLog(`✔ Logado como ${user.email}. Pronto pra ajustar.`, "ok");
+  } else {
+    loginBox.style.display = "flex";
+    btnRodar.disabled = true;
+  }
+});
+
+// Mesma lógica de ajuste transacional do DB.produtos.definirEstoque (v2-js/db.js):
+// se o produto tem variantes, define o estoque de cada uma e recalcula o total;
+// senão, define direto o campo `estoque` do produto. Sempre registra em "movimentos".
+async function definirEstoqueDeTeste(doc, novo) {
+  const ref = doc.ref;
+  return db.runTransaction(async (tx) => {
+    const d = await tx.get(ref);
+    if (!d.exists) return null;
+    const p = d.data();
+    const antes = p.estoque || 0;
+    if (antes > 0) return { pulado: true };
+    const campos = {};
+    if (Array.isArray(p.variantes) && p.variantes.length) {
+      const variantes = p.variantes.map((v) => ({ ...v, estoque: novo }));
+      campos.variantes = variantes;
+      campos.estoque = variantes.reduce((s, v) => s + v.estoque, 0);
+    } else {
+      campos.estoque = novo;
+    }
+    tx.update(ref, campos);
+    tx.set(db.collection("movimentos").doc(), {
+      produtoId: doc.id, produtoNome: p.nome || "", vid: "", variante: "",
+      tipo: "ajuste", qtd: campos.estoque - antes, antes, depois: campos.estoque,
+      motivo: "Ajuste para teste de checkout (ferramenta de migração)", obs: "", ref: "",
+      custoUnit: null, por: (auth.currentUser && auth.currentUser.email) || "", criadoEm: new Date().toISOString(),
+    });
+    return { pulado: false, antes, depois: campos.estoque };
+  });
+}
+
+btnRodar.addEventListener("click", async () => {
+  const novo = Math.max(1, parseInt(qtdInput.value, 10) || 5);
+  btnRodar.disabled = true;
+  addLog(`▶ Lendo produtos ativos...`, "info");
+  try {
+    const snap = await db.collection("produtos").where("ativo", "==", true).get();
+    addLog(`▶ ${snap.size} produtos ativos encontrados. Ajustando os com estoque zerado...`, "info");
+    let ajustados = 0, pulados = 0;
+    for (const doc of snap.docs) {
+      const r = await definirEstoqueDeTeste(doc, novo);
+      if (!r) { pulados++; continue; }
+      if (r.pulado) pulados++; else { ajustados++; }
+    }
+    addLog(`✔ ${ajustados} produto(s) ajustado(s) para estoque ${novo}.`, "ok");
+    addLog(`↷ ${pulados} produto(s) pulado(s) (já tinham estoque > 0, ou não existem mais).`, "skip");
+    addLog("RESULTADO: OK", "ok");
+  } catch (e) {
+    addLog(`✘ Erro — ${e.message}`, "err");
+  }
+  btnRodar.disabled = false;
+});
+</script>
+</body>
+</html>
