@@ -15,6 +15,7 @@ window.Admin.modulos.push((A) => {
   let formaRapida = ""; // forma de pagamento escolhida na tela da venda (antes de abrir o recebimento)
   let catAtiva = "all", termo = "";
   let diaVendas = "";
+  let posCat = {}; // posição de cada categoria na ordem curada (ver A.telas.pdv) — usado pra a grade "Todos" respeitar Produtos/Categorias em vez de sair alfabética
 
   // mesmo comparador de Produtos/Categorias (ordem é extensão própria, fora do schema
   // padrão do loja-online) — sem isso os chips de categoria do PDV saem em ordem alfabética
@@ -41,6 +42,7 @@ window.Admin.modulos.push((A) => {
     carregando("pdv");
     [produtos, categorias, clientes] = await Promise.all([DB.produtos.listar(), DB.categorias.listar(), DB.clientes.listar()]);
     categorias = [...categorias].sort(compararPorOrdem);
+    posCat = Object.fromEntries(categorias.map((c, idx) => [c.id, idx]));
     desenharBase();
   };
 
@@ -167,8 +169,16 @@ window.Admin.modulos.push((A) => {
     $("#pdv-chips").innerHTML = `<button type="button" data-cat="all" class="${catAtiva === "all" ? "ativo" : ""}">Todos</button>` +
       categorias.map((c) => `<button type="button" data-cat="${esc(c.id)}" class="${catAtiva === c.id ? "ativo" : ""}">${esc(c.nome)}</button>`).join("");
   };
+  // mesmo critério de Produtos/Categorias: posição da categoria primeiro, depois a ordem
+  // do produto dentro dela (ver admin.js:compararProdutos) — sem isso a grade "Todos" mistura
+  // produtos de categorias diferentes em ordem alfabética.
+  const compararProdutos = (a, b) => {
+    const pa = posCat[a.categoria] ?? Infinity, pb = posCat[b.categoria] ?? Infinity;
+    if (pa !== pb) return pa - pb;
+    return (a.ordem ?? Number(a.id) ?? 0) - (b.ordem ?? Number(b.id) ?? 0);
+  };
   const desenharProdutos = () => {
-    const lista = filtrados().sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+    const lista = filtrados().sort(compararProdutos);
     $("#pdv-produtos").innerHTML = lista.map((p) => `
       <button type="button" class="pdv-card ${p.estoque <= 0 ? "sem" : ""}" data-pid="${p.id}">
         <img src="${esc(p.imagem || DB.placeholder("📦", "#e5e7eb"))}" alt="" />

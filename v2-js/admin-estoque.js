@@ -8,7 +8,11 @@ window.Admin.modulos.push((A) => {
 
   const SUBS = [["painel", "Painel", "fa-chart-column"], ["itens", "Estoque", "fa-boxes-stacked"], ["contagem", "Contagem", "fa-clipboard-check"], ["mov", "Movimentações", "fa-clock-rotate-left"]];
   let sub = "painel";
-  const filtro = { busca: "", cat: "todas", sit: "todas", ordem: "nome", variacoes: true };
+  const filtro = { busca: "", cat: "todas", sit: "todas", ordem: "padrao", variacoes: true };
+  // mesmo critério de Produtos/Categorias (ver admin.js:compararProdutos): posição da
+  // categoria primeiro, depois a ordem do produto dentro dela — sem isso a lista sai
+  // alfabética em vez de respeitar a organização feita em Categorias/Produtos.
+  const compararPorOrdemCat = (a, b) => (a.ordem ?? Infinity) - (b.ordem ?? Infinity) || a.nome.localeCompare(b.nome, "pt-BR");
   const filtroCont = { busca: "", cat: "todas" };
   const filtroMov = { dias: "30", tipo: "todos", busca: "", produtoId: "" };
   let ultimo = { mapa: new Map(), cfg: {} }; // últimas linhas carregadas (para as ações dos botões)
@@ -485,7 +489,12 @@ window.Admin.modulos.push((A) => {
         .map((p) => ({ p, ...linhasDoProduto(p, cfg) }))
         .map((g) => ({ ...g, vis: g.folhas.filter((l) => filtro.sit === "todas" || situacao(l) === filtro.sit) })).filter((g) => g.vis.length);
       const valorG = (g) => g.folhas.reduce((s, l) => s + l.estoque * l.preco, 0);
-      const ord = { nome: (a, c) => a.p.nome.localeCompare(c.p.nome, "pt-BR"), menor: (a, c) => num(a.p.estoque) - num(c.p.estoque), valor: (a, c) => valorG(c) - valorG(a) }[filtro.ordem];
+      const categoriasOrdenadas = [...categorias].sort(compararPorOrdemCat);
+      const posCat = Object.fromEntries(categoriasOrdenadas.map((c, idx) => [c.id, idx]));
+      const ord = {
+        padrao: (a, c) => { const pa = posCat[a.p.categoria] ?? Infinity, pc = posCat[c.p.categoria] ?? Infinity; return pa !== pc ? pa - pc : (a.p.ordem ?? Number(a.p.id) ?? 0) - (c.p.ordem ?? Number(c.p.id) ?? 0); },
+        nome: (a, c) => a.p.nome.localeCompare(c.p.nome, "pt-BR"), menor: (a, c) => num(a.p.estoque) - num(c.p.estoque), valor: (a, c) => valorG(c) - valorG(a),
+      }[filtro.ordem];
       grupos.sort(ord);
       const linhas = grupos.flatMap((g) => (g.pai ? [g.pai, ...(filtro.variacoes ? g.vis : [])] : g.vis));
       registrar(linhas);
@@ -502,7 +511,7 @@ window.Admin.modulos.push((A) => {
         <input id="est-busca" placeholder="Buscar produto ou código..." value="${esc(filtro.busca)}" />
         <select id="est-cat"><option value="todas">Todas as categorias</option>${categorias.sort((a, c) => a.nome.localeCompare(c.nome, "pt-BR")).map((c) => `<option value="${esc(c.id)}" ${filtro.cat === c.id ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}</select>
         <select id="est-sit">${[["todas", "Todas as situações"], ["zerado", "Sem estoque"], ["baixo", "Estoque baixo"], ["ok", "Normal"]].map(([v, n]) => `<option value="${v}" ${filtro.sit === v ? "selected" : ""}>${n}</option>`).join("")}</select>
-        <select id="est-ord">${[["nome", "Ordem: nome"], ["menor", "Ordem: menor estoque"], ["valor", "Ordem: maior valor"]].map(([v, n]) => `<option value="${v}" ${filtro.ordem === v ? "selected" : ""}>${n}</option>`).join("")}</select>
+        <select id="est-ord">${[["padrao", "Ordem: padrão (categorias)"], ["nome", "Ordem: nome"], ["menor", "Ordem: menor estoque"], ["valor", "Ordem: maior valor"]].map(([v, n]) => `<option value="${v}" ${filtro.ordem === v ? "selected" : ""}>${n}</option>`).join("")}</select>
       </div>
       <div class="est-barra">
         <label class="check"><input type="checkbox" id="est-var" ${filtro.variacoes ? "checked" : ""} /> Mostrar variações</label>

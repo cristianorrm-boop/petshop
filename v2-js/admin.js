@@ -415,7 +415,7 @@ document.addEventListener("DOMContentLoaded", () => {
   window.Admin.verPedido = verPedido;
 
   // ---- Produtos ----
-  let buscaProd = "";
+  let buscaProd = "", catProd = "todas";
   telas.produtos = async () => {
     carregando("produtos");
     const [produtos, categorias] = await Promise.all([DB.produtos.listar(), DB.categorias.listar()]);
@@ -434,10 +434,12 @@ document.addEventListener("DOMContentLoaded", () => {
       if (pa !== pb) return pa - pb;
       return (a.ordem ?? Number(a.id) ?? 0) - (b.ordem ?? Number(b.id) ?? 0);
     };
-    const lista = produtos.filter((p) => p.nome.toLowerCase().includes(buscaProd.toLowerCase())).sort(compararProdutos);
+    const lista = produtos.filter((p) => p.nome.toLowerCase().includes(buscaProd.toLowerCase()) && (catProd === "todas" || p.categoria === catProd)).sort(compararProdutos);
     $("#tab-produtos").innerHTML = `
       <div class="cab"><h1>Produtos</h1><div class="barra-acoes"><button class="btn sec" id="exemplos-produtos" title="Adiciona produtos de exemplo de uma loja de acessórios"><i class="fa-solid fa-wand-magic-sparkles"></i> Adicionar exemplos</button><button class="btn" id="novo-produto"><i class="fa-solid fa-plus"></i> Novo produto</button></div></div>
-      <div class="filtros"><input id="busca-prod" placeholder="Buscar produto..." value="${esc(buscaProd)}" /></div>
+      <div class="filtros"><input id="busca-prod" placeholder="Buscar produto..." value="${esc(buscaProd)}" />
+        <select id="filtro-cat-prod"><option value="todas">Todas as categorias</option>${categoriasOrdenadas.map((c) => `<option value="${esc(c.id)}" ${catProd === c.id ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}</select>
+      </div>
       <table><thead><tr><th></th><th>Nome</th><th>Categoria</th><th>Preço</th><th>Estoque</th><th>Situação</th><th></th></tr></thead><tbody>
       ${lista.map((p) => `<tr>
         <td><img src="${esc(p.imagem)}" alt="" /></td><td>${esc(p.nome)}${p.destaque ? " ⭐" : ""}${p.variantes?.length ? ` <small style="color:var(--suave)">(${p.variantes.length} variações)</small>` : ""}</td><td>${esc(cats[p.categoria] || "—")}</td>
@@ -447,6 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </tbody></table>`;
     const b = $("#busca-prod");
     b.oninput = () => { buscaProd = b.value; telas.produtos().then(() => { const n = $("#busca-prod"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }); };
+    $("#filtro-cat-prod").onchange = (e) => { catProd = e.target.value; telas.produtos(); };
     $("#novo-produto").onclick = () => formProduto();
     $("#exemplos-produtos").onclick = async (e) => {
       if (!confirm("Adicionar produtos de exemplo de uma loja de acessórios (bijuterias, relógios, bolsas, óculos, carteiras, tech e cabelo)?\n\nNada será apagado e produtos com o mesmo nome não são repetidos.")) return;
