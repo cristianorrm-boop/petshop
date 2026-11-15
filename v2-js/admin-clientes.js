@@ -2,7 +2,21 @@
 window.Admin.modulos.push((A) => {
   const { $, toast, tentar, abrirModal, carregando } = A;
   const { moeda, esc } = DB;
-  let busca = "";
+  let busca = "", periodo = "todos";
+
+  // Mesmo critério de período usado em Relatórios (admin-relatorios.js), só que aqui filtra
+  // pela data de cadastro do cliente (criadoEm) em vez da data da venda.
+  const pad = (n) => String(n).padStart(2, "0");
+  const dia0 = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const addDias = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const formatarData = (iso) => { const d = iso && new Date(iso); return d && !isNaN(d) ? `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}` : "—"; };
+  const inicioPeriodo = () => {
+    const h = dia0(new Date());
+    if (periodo === "hoje") return h;
+    if (periodo === "7") return addDias(h, -6);
+    if (periodo === "30") return addDias(h, -29);
+    return null;
+  };
 
   // Abre o formulário no modal. `depois(clienteSalvo)` é chamado após salvar.
   A.formCliente = (c, depois, inicial) => {
@@ -109,14 +123,23 @@ window.Admin.modulos.push((A) => {
     await A.sincronizarClientes();
     const clientes = await DB.clientes.listar();
     const t = busca.toLowerCase();
+    const ini = inicioPeriodo();
     const lista = clientes
       .filter((c) => !t || `${c.nome} ${c.telefone || ""} ${c.documento || ""} ${c.email || ""}`.toLowerCase().includes(t))
-      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      .filter((c) => !ini || (c.criadoEm && new Date(c.criadoEm) >= ini))
+      // Cadastrados mais recentes primeiro (criadoEm desc) — quem não tem data (cliente antigo) vai pro final, por nome.
+      .sort((a, b) => (a.criadoEm && b.criadoEm) ? b.criadoEm.localeCompare(a.criadoEm) : a.criadoEm ? -1 : b.criadoEm ? 1 : a.nome.localeCompare(b.nome, "pt-BR"));
 
     $("#tab-clientes").innerHTML = `
       <div class="cab"><h1>Clientes</h1><button class="btn" id="novo-cliente"><i class="fa-solid fa-user-plus"></i> Novo cliente</button></div>
-      <div class="filtros"><input id="busca-cliente" placeholder="Buscar por nome, telefone, CPF/CNPJ ou e-mail..." value="${esc(busca)}" style="min-width:300px" /></div>
-      <table class="tabela-cartoes"><thead><tr><th>Nome</th><th>Telefone</th><th>CPF / CNPJ</th><th>E-mail</th><th>Bichinho(s)</th><th></th></tr></thead><tbody>
+      <div class="filtros">
+        <input id="busca-cliente" placeholder="Buscar por nome, telefone, CPF/CNPJ ou e-mail..." value="${esc(busca)}" style="min-width:300px" />
+        <select id="clientes-periodo">
+          ${[["todos", "Todos os cadastros"], ["hoje", "Hoje"], ["7", "Últimos 7 dias"], ["30", "Últimos 30 dias"]]
+            .map(([v, n]) => `<option value="${v}" ${periodo === v ? "selected" : ""}>${n}</option>`).join("")}
+        </select>
+      </div>
+      <table class="tabela-cartoes"><thead><tr><th>Nome</th><th>Telefone</th><th>CPF / CNPJ</th><th>E-mail</th><th>Bichinho(s)</th><th>Cadastro</th><th></th></tr></thead><tbody>
       ${lista.map((c) => {
         const fone = (c.telefone || "").replace(/\D/g, "");
         const inicial = esc((c.nome.trim()[0] || "?").toUpperCase());
@@ -126,11 +149,12 @@ window.Admin.modulos.push((A) => {
           <td data-label="CPF / CNPJ">${esc(c.documento || "—")}</td>
           <td data-label="E-mail">${c.email ? `<a class="cli-link" href="mailto:${esc(c.email)}">${esc(c.email)}</a>` : "—"}</td>
           <td data-label="Bichinho(s)">${resumoBichinhos(c)}</td>
+          <td data-label="Cadastro">${formatarData(c.criadoEm)}</td>
           <td class="acoes">
             ${fone ? `<a class="btn sec peq" target="_blank" rel="noopener" href="https://wa.me/${fone.length > 11 ? fone : "55" + fone}" aria-label="Abrir WhatsApp de ${esc(c.nome)}"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ""}
             <button class="btn sec peq" data-edit="${c.id}">Editar</button>
             <button class="btn perigo peq" data-del="${c.id}">Excluir</button></td></tr>`;
-      }).join("") || `<tr><td colspan="6" class="vazio">${clientes.length ? "Nenhum cliente encontrado." : "Nenhum cliente cadastrado."}</td></tr>`}
+      }).join("") || `<tr><td colspan="7" class="vazio">${clientes.length ? "Nenhum cliente encontrado." : "Nenhum cliente cadastrado."}</td></tr>`}
       </tbody></table>`;
 
     $("#novo-cliente").onclick = () => A.formCliente(null, () => A.telas.clientes());
@@ -140,6 +164,7 @@ window.Admin.modulos.push((A) => {
       clearTimeout(b._t);
       b._t = setTimeout(async () => { await A.telas.clientes(); const n = $("#busca-cliente"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 300);
     };
+    $("#clientes-periodo").onchange = (e) => { periodo = e.target.value; A.telas.clientes(); };
     $("#tab-clientes").onclick = async (e) => {
       const ed = e.target.closest("[data-edit]"), del = e.target.closest("[data-del]");
       if (ed) A.formCliente(clientes.find((c) => c.id === ed.dataset.edit), () => A.telas.clientes());
