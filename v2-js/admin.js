@@ -282,21 +282,56 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // ---- Pedidos ----
   let filtroStatus = "todos";
+  const pedidosSelecionados = new Set();
   telas.pedidos = async () => {
     carregando("pedidos");
     const todos = (await DB.pedidos.listar()).sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
     const lista = filtroStatus === "todos" ? todos : todos.filter((p) => p.status === filtroStatus);
+    const idsVisiveis = new Set(lista.map((p) => p.id));
+    // Mantém marcado só o que ainda está na lista (ex.: trocou o filtro de status)
+    for (const id of [...pedidosSelecionados]) if (!idsVisiveis.has(id)) pedidosSelecionados.delete(id);
     $("#tab-pedidos").innerHTML = `
-      <div class="cab"><h1>Pedidos</h1></div>
+      <div class="cab"><h1>Pedidos</h1>
+        <button type="button" class="btn perigo peq" id="excluir-pedidos-sel" ${pedidosSelecionados.size ? "" : "hidden"}><i class="fa-solid fa-trash"></i> Excluir selecionados (${pedidosSelecionados.size})</button>
+      </div>
       <div class="filtros"><select id="f-status"><option value="todos">Todos os status</option>${STATUS.map((s) => `<option value="${s}" ${s === filtroStatus ? "selected" : ""}>${ROTULO[s]}</option>`).join("")}</select></div>
-      <table><thead><tr><th>Código</th><th>Data</th><th>Cliente</th><th>Tipo</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>
+      <table><thead><tr><th><input type="checkbox" id="sel-todos-pedidos" aria-label="Selecionar todos" ${lista.length && lista.every((p) => pedidosSelecionados.has(p.id)) ? "checked" : ""} /></th><th>Código</th><th>Data</th><th>Cliente</th><th>Tipo</th><th>Total</th><th>Status</th><th></th></tr></thead><tbody>
       ${lista.map((p) => `<tr>
+        <td><input type="checkbox" class="sel-pedido" data-sel="${p.id}" aria-label="Selecionar pedido ${esc(p.codigo)}" ${pedidosSelecionados.has(p.id) ? "checked" : ""} /></td>
         <td>#${esc(p.codigo)}</td><td>${dataBR(p.criadoEm)}</td><td>${esc(p.cliente.nome)}</td>
         <td>${p.tipo === "entrega" ? "Entrega" : "Retirada"}</td><td>${moeda(p.total)}</td>
         <td><span class="status s-${p.status}">${ROTULO[p.status]}</span></td>
-        <td class="acoes"><button class="btn sec peq" data-ver="${p.id}">Detalhes</button></td></tr>`).join("") || `<tr><td colspan="7" class="vazio">Nenhum pedido.</td></tr>`}
+        <td class="acoes"><button class="btn sec peq" data-ver="${p.id}">Detalhes</button></td></tr>`).join("") || `<tr><td colspan="8" class="vazio">Nenhum pedido.</td></tr>`}
       </tbody></table>`;
     $("#f-status").onchange = (e) => { filtroStatus = e.target.value; telas.pedidos(); };
+    const botaoExcluirSel = $("#excluir-pedidos-sel");
+    const atualizarBotaoSel = () => {
+      botaoExcluirSel.hidden = pedidosSelecionados.size === 0;
+      botaoExcluirSel.innerHTML = `<i class="fa-solid fa-trash"></i> Excluir selecionados (${pedidosSelecionados.size})`;
+    };
+    $("#sel-todos-pedidos").onchange = (e) => {
+      lista.forEach((p) => e.target.checked ? pedidosSelecionados.add(p.id) : pedidosSelecionados.delete(p.id));
+      document.querySelectorAll(".sel-pedido").forEach((c) => { c.checked = e.target.checked; });
+      atualizarBotaoSel();
+    };
+    document.querySelectorAll(".sel-pedido").forEach((c) => {
+      c.onchange = () => {
+        if (c.checked) pedidosSelecionados.add(c.dataset.sel); else pedidosSelecionados.delete(c.dataset.sel);
+        atualizarBotaoSel();
+      };
+    });
+    botaoExcluirSel.onclick = async () => {
+      const selecionados = lista.filter((p) => pedidosSelecionados.has(p.id));
+      if (!selecionados.length) return;
+      const algumBaixado = selecionados.some((p) => p.estoqueBaixado);
+      const aviso = algumBaixado ? "\n\nAtenção: o estoque de algum desses pedidos já foi baixado e NÃO será devolvido." : "";
+      if (!confirm(`Excluir ${selecionados.length} pedido(s) definitivamente?${aviso}`)) return;
+      let falhas = 0;
+      for (const p of selecionados) { if (!(await tentar(() => DB.pedidos.excluir(p.id)))) falhas++; }
+      pedidosSelecionados.clear();
+      toast(falhas ? `${falhas} pedido(s) não puderam ser excluídos` : "Pedidos excluídos");
+      telas.pedidos();
+    };
   };
 
   // O estoque é baixado quando o pedido é confirmado e devolvido se voltar a "novo" ou for cancelado.

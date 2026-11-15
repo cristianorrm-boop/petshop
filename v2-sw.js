@@ -5,11 +5,11 @@
 // numa versão de dias atrás mesmo depois de limpar cache e aguardar o site inteiro (ver
 // commit da correção do carrossel "Em promoção"). Com o nome do arquivo mudando a cada
 // publicação, não tem cache (navegador, CDN ou daqui) que consiga servir o antigo no lugar.
-const VERSAO = "manejomix-v2-2";
+const VERSAO = "manejomix-v2-3";
 const BASE = [
-  "./", "v2-index.html", "v2-acompanhar.html", "v2-css/style.css?v=20261115b", "v2-css/splash.css?v=20261115b",
-  "v2-js/db.js?v=20261115b", "v2-js/store.js?v=20261115b", "v2-js/acompanhar.js?v=20261115b", "v2-js/pwa.js?v=20261115b", "v2-js/splash.js?v=20261115b",
-  "v2-firebase-config.js?v=20261115b", "v2-manifest.webmanifest", "v2-icons/icon-192.png",
+  "./", "v2-index.html", "v2-acompanhar.html", "v2-css/style.css?v=20261115c", "v2-css/splash.css?v=20261115c",
+  "v2-js/db.js?v=20261115c", "v2-js/store.js?v=20261115c", "v2-js/acompanhar.js?v=20261115c", "v2-js/pwa.js?v=20261115c", "v2-js/splash.js?v=20261115c",
+  "v2-firebase-config.js?v=20261115c", "v2-manifest.webmanifest", "v2-icons/icon-192.png",
 ];
 
 self.addEventListener("install", (e) => {

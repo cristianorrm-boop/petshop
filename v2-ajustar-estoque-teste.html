@@ -56,6 +56,17 @@
 
 <div id="log"><span class="info">Faça login para habilitar.</span></div>
 
+<hr style="width:100%;max-width:560px;border-color:#333;margin:28px 0" />
+
+<h1 style="font-size:1.1rem">↩ Zerar estoque de teste</h1>
+<p>Quando a contagem real estiver pronta pra entrar, use isto pra voltar a 0 só os produtos que
+   foram ajustados pelo botão acima (procurados pelo motivo gravado em "movimentos") — não mexe
+   em nenhum produto com contagem feita manualmente por outro caminho.</p>
+<div class="linha">
+  <button class="acao" id="btn-zerar" disabled>↩ Zerar estoque de teste</button>
+</div>
+<div id="log-zerar"><span class="info">Faça login para habilitar.</span></div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -67,20 +78,23 @@ const db = firebase.firestore();
 const auth = firebase.auth();
 
 const log = document.getElementById("log");
+const logZerar = document.getElementById("log-zerar");
 const btnRodar = document.getElementById("btn-rodar");
+const btnZerar = document.getElementById("btn-zerar");
 const qtdInput = document.getElementById("qtd-input");
 const loginBtn = document.getElementById("login-btn");
 const loginBox = document.getElementById("login-box");
 const loginError = document.getElementById("login-error");
 
-const addLog = (msg, tipo = "ok") => {
+const addLogEm = (alvo, msg, tipo = "ok") => {
   const span = document.createElement("span");
   span.className = tipo;
   span.textContent = msg;
-  log.appendChild(span);
-  log.appendChild(document.createElement("br"));
-  log.scrollTop = log.scrollHeight;
+  alvo.appendChild(span);
+  alvo.appendChild(document.createElement("br"));
+  alvo.scrollTop = alvo.scrollHeight;
 };
+const addLog = (msg, tipo = "ok") => addLogEm(log, msg, tipo);
 
 loginBtn.addEventListener("click", () => {
   const email = document.getElementById("email-input").value.trim();
@@ -95,11 +109,15 @@ auth.onAuthStateChanged(user => {
   if (user) {
     loginBox.style.display = "none";
     btnRodar.disabled = false;
+    btnZerar.disabled = false;
     log.innerHTML = "";
+    logZerar.innerHTML = "";
     addLog(`✔ Logado como ${user.email}. Pronto pra ajustar.`, "ok");
+    addLogEm(logZerar, `✔ Logado como ${user.email}. Pronto pra zerar.`, "ok");
   } else {
     loginBox.style.display = "flex";
     btnRodar.disabled = true;
+    btnZerar.disabled = true;
   }
 });
 
@@ -132,6 +150,61 @@ async function definirEstoqueDeTeste(doc, novo) {
     return { pulado: false, antes, depois: campos.estoque };
   });
 }
+
+const MOTIVO_TESTE = "Ajuste para teste de checkout (ferramenta de migração)";
+
+// Mesmo padrão transacional acima, só que zera (não define um valor fixo) e só mexe em quem
+// tem o motivo de teste gravado — produto com contagem real feita por outro caminho não tem
+// esse motivo no histórico, então fica de fora.
+async function zerarEstoqueDeTeste(id) {
+  const ref = db.collection("produtos").doc(id);
+  return db.runTransaction(async (tx) => {
+    const d = await tx.get(ref);
+    if (!d.exists) return null;
+    const p = d.data();
+    const antes = p.estoque || 0;
+    const campos = {};
+    if (Array.isArray(p.variantes) && p.variantes.length) {
+      campos.variantes = p.variantes.map((v) => ({ ...v, estoque: 0 }));
+      campos.estoque = 0;
+    } else {
+      campos.estoque = 0;
+    }
+    tx.update(ref, campos);
+    if (antes !== 0) {
+      tx.set(db.collection("movimentos").doc(), {
+        produtoId: id, produtoNome: p.nome || "", vid: "", variante: "",
+        tipo: "ajuste", qtd: 0 - antes, antes, depois: 0,
+        motivo: "Zerado após testes (volta para 0, aguardando contagem real)", obs: "", ref: "",
+        custoUnit: null, por: (auth.currentUser && auth.currentUser.email) || "", criadoEm: new Date().toISOString(),
+      });
+    }
+    return { antes };
+  });
+}
+
+btnZerar.addEventListener("click", async () => {
+  if (!confirm("Isso vai zerar o estoque de todos os produtos que foram ajustados pra teste. Confirma?")) return;
+  btnZerar.disabled = true;
+  addLogEm(logZerar, "▶ Procurando produtos ajustados pra teste...", "info");
+  try {
+    const snap = await db.collection("movimentos").where("motivo", "==", MOTIVO_TESTE).get();
+    const ids = [...new Set(snap.docs.map((d) => d.data().produtoId).filter(Boolean))];
+    addLogEm(logZerar, `▶ ${ids.length} produto(s) encontrado(s). Zerando...`, "info");
+    let zerados = 0, jaZero = 0, naoExiste = 0;
+    for (const id of ids) {
+      const r = await zerarEstoqueDeTeste(id);
+      if (!r) { naoExiste++; continue; }
+      if (r.antes === 0) jaZero++; else zerados++;
+    }
+    addLogEm(logZerar, `✔ ${zerados} produto(s) zerado(s).`, "ok");
+    addLogEm(logZerar, `↷ ${jaZero} já estavam em 0, ${naoExiste} não existem mais.`, "skip");
+    addLogEm(logZerar, "RESULTADO: OK", "ok");
+  } catch (e) {
+    addLogEm(logZerar, `✘ Erro — ${e.message}`, "err");
+  }
+  btnZerar.disabled = false;
+});
 
 btnRodar.addEventListener("click", async () => {
   const novo = Math.max(1, parseInt(qtdInput.value, 10) || 5);
