@@ -807,15 +807,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     Splash.fechar();
     return;
   }
-  posCat = posicaoCategorias();
-  aplicarConfig();
-  montarRegioes();
-  aplicarCheckout();
-  renderHome();
-  renderChips();
-  renderGrid();
-  atualizarModo();
-  rotear();
+  // Daqui pra baixo não tinha proteção nenhuma: um erro em qualquer parte (ex.: um dado
+  // mal formado vindo do Firestore) derrubava silenciosamente tudo que vem depois dele
+  // (grade de produtos, chips, roteamento) sem deixar rastro nenhum na tela — só no
+  // Console (F12), que a maioria dos visitantes nunca abre. Mostra um aviso visível.
+  try {
+    posCat = posicaoCategorias();
+    aplicarConfig();
+    montarRegioes();
+    aplicarCheckout();
+    renderHome();
+    renderChips();
+    renderGrid();
+    atualizarModo();
+    rotear();
+  } catch (err) {
+    console.error(err);
+    const aviso = document.createElement("div");
+    aviso.style.cssText = "position:fixed;z-index:99999;left:0;right:0;bottom:0;background:#b91c1c;color:#fff;padding:10px 14px;font:13px monospace;white-space:pre-wrap;max-height:40vh;overflow:auto";
+    aviso.textContent = "Erro ao montar a página: " + (err && err.stack || err);
+    document.body.appendChild(aviso);
+  }
   const tema = document.querySelector('meta[name="theme-color"]');
   if (tema) tema.content = getComputedStyle(document.documentElement).getPropertyValue("--primaria").trim() || tema.content;
   await Splash.abrir(config);
