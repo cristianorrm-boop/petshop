@@ -201,11 +201,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     $("#promo-container").innerHTML = promocoes.slice(0, qtdPromo).map(cardHtml).join("");
     const secaoPromo = $("#home-promocoes");
     if (secaoPromo) secaoPromo.hidden = config.mostrarPromocoes === false || promocoes.length === 0;
-    // DIAGNÓSTICO TEMPORÁRIO (ver PR do carrossel "Em promoção" sumido) — remover depois.
-    const diag = document.createElement("div");
-    diag.style.cssText = "position:fixed;z-index:99999;left:0;right:0;top:0;background:#1d4ed8;color:#fff;padding:8px 14px;font:12px monospace;white-space:pre-wrap";
-    diag.textContent = `DIAG promoções — elemento #home-promocoes encontrado: ${!!secaoPromo} | config.mostrarPromocoes: ${JSON.stringify(config.mostrarPromocoes)} | promocoes.length: ${promocoes.length} | hidden aplicado: ${secaoPromo ? secaoPromo.hidden : "n/a"} | offsetParent null?: ${secaoPromo ? secaoPromo.offsetParent === null : "n/a"}`;
-    document.body.appendChild(diag);
     iniciarCarrosseis();
   };
 
@@ -828,10 +823,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     atualizarModo();
     rotear();
   } catch (err) {
+    // Detalhe completo só no Console (F12) — cliente real não precisa ver um erro técnico,
+    // só saber que algo falhou e pode tentar de novo.
     console.error(err);
     const aviso = document.createElement("div");
-    aviso.style.cssText = "position:fixed;z-index:99999;left:0;right:0;bottom:0;background:#b91c1c;color:#fff;padding:10px 14px;font:13px monospace;white-space:pre-wrap;max-height:40vh;overflow:auto";
-    aviso.textContent = "Erro ao montar a página: " + (err && err.stack || err);
+    aviso.style.cssText = "position:fixed;z-index:99999;left:0;right:0;bottom:0;background:#b91c1c;color:#fff;padding:10px 14px;font:13px sans-serif;text-align:center";
+    aviso.textContent = "Ocorreu um problema ao carregar a página. Tente atualizar (F5).";
     document.body.appendChild(aviso);
   }
   const tema = document.querySelector('meta[name="theme-color"]');
