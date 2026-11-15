@@ -26,7 +26,7 @@ window.Admin.modulos.push((A) => {
     abrirModal(nova ? "Novo cliente" : "Editar cliente", `
       <label>Nome<input name="nome" value="${esc(c.nome)}" required autocomplete="off" /></label>
       <div class="grid2">
-        <label>Telefone / WhatsApp<input name="telefone" type="tel" value="${esc(c.telefone || "")}" placeholder="(81) 99999-9999" /></label>
+        <label>Telefone / WhatsApp<input name="telefone" type="tel" value="${esc(c.telefone || "")}" placeholder="(34) 99999-9999" /></label>
         <label>CPF / CNPJ<input name="documento" value="${esc(c.documento || "")}" /></label>
       </div>
       <div class="grid2">

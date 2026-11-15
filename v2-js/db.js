@@ -48,11 +48,14 @@
     // Página inicial
     mostrarCategorias: true,
     mostrarDestaques: true,
+    mostrarPromocoes: false,  // desligado por padrão: só liga quando a cliente marcar produtos em promoção
     mostrarLocalizacao: true,
     mostrarContato: true,
     tituloCategorias: "Categorias",
     tituloDestaques: "Produtos em destaque",
     qtdDestaques: 8,
+    tituloPromocoes: "Em promoção",
+    qtdPromocoes: 8,
     tituloLocalizacao: "Localização",
     tituloContato: "Contato",
     textoContato: "Fale com a gente pelo WhatsApp.",

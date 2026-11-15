@@ -477,7 +477,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   async function formProduto(id) {
-    const p = id ? await DB.produtos.obter(id) : { nome: "", categoria: "", ordem: "", preco: "", precoAntigo: "", estoque: 0, descricao: "", imagem: "", destaque: false, ativo: true };
+    const p = id ? await DB.produtos.obter(id) : { nome: "", categoria: "", ordem: "", preco: "", precoAntigo: "", estoque: 0, descricao: "", imagem: "", destaque: false, promocao: false, ativo: true };
     const cats = await DB.categorias.listar();
     let imagem = p.imagem;
     abrirModal(id ? "Editar produto" : "Novo produto", `
@@ -510,6 +510,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </label>
       <img class="prev" id="img-prev" src="${esc(p.imagem)}" alt="" ${p.imagem ? "" : "hidden"} />
       <label class="check"><input type="checkbox" name="destaque" ${p.destaque ? "checked" : ""} /> Produto em destaque</label>
+      <label class="check"><input type="checkbox" name="promocao" ${p.promocao ? "checked" : ""} /> Produto em promoção</label>
       <label class="check"><input type="checkbox" name="ativo" ${p.ativo !== false ? "checked" : ""} /> Visível na loja</label>`,
       async (d) => {
         const url = d.imagemUrl.trim();
@@ -520,7 +521,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const item = {
           ...p, nome: d.nome.trim(), categoria: d.categoria, ordem: d.ordem === "" ? null : parseInt(d.ordem, 10), preco: parseFloat(d.preco), precoAntigo: parseFloat(d.precoAntigo) || 0,
           estoque: variantes.length ? variantes.reduce((t, v) => t + v.estoque, 0) : parseInt(d.estoque, 10), variantes, estoqueMinimo: d.estoqueMinimo === "" ? null : Math.max(0, parseInt(d.estoqueMinimo, 10) || 0), codigo: d.codigo.trim(), custo: d.custo === "" ? null : parseFloat(d.custo), descricao: d.descricao.trim(), imagem: url || imagem || DB.placeholder("📦", "#e5e7eb"),
-          destaque: d.destaque === "on", ativo: d.ativo === "on",
+          destaque: d.destaque === "on", promocao: d.promocao === "on", ativo: d.ativo === "on",
         };
         let salvo = null;
         if (!(await tentar(async () => { salvo = await DB.produtos.salvar(item); }, "Falha ao salvar (imagem muito grande?)"))) return false;

@@ -103,6 +103,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // títulos das seções
     $("#tit-categorias").textContent = config.tituloCategorias || "Categorias";
     $("#tit-destaques").textContent = config.tituloDestaques || "Produtos em destaque";
+    $("#tit-promocoes").textContent = config.tituloPromocoes || "Em promoção";
     $("#tit-localizacao").textContent = config.tituloLocalizacao || "Localização";
     $("#tit-contato").textContent = config.tituloContato || "Contato";
 
@@ -156,6 +157,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       <article class="card" data-id="${p.id}">
         <div class="tags">
           ${p.destaque ? `<span class="tag">Destaque</span>` : ""}
+          ${p.promocao ? `<span class="tag desc">Promoção</span>` : ""}
           ${desc ? `<span class="tag desc">-${desc}%</span>` : ""}
           ${esgotado ? `<span class="tag esgotado">Esgotado</span>` : ""}
         </div>
@@ -193,6 +195,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     destaques = [...destaques].sort((a, b) => Number(b.destaque) - Number(a.destaque) || compararPorOrdem(a, b));
     $("#featured-container").innerHTML = destaques.slice(0, qtd).map(cardHtml).join("");
     $("#home-destaques").hidden = config.mostrarDestaques === false || destaques.length === 0;
+
+    const qtdPromo = Math.min(24, Math.max(1, parseInt(config.qtdPromocoes, 10) || 8));
+    const promocoes = [...lista.filter((p) => p.promocao)].sort(compararPorOrdem);
+    $("#promo-container").innerHTML = promocoes.slice(0, qtdPromo).map(cardHtml).join("");
+    $("#home-promocoes").hidden = config.mostrarPromocoes === false || promocoes.length === 0;
     iniciarCarrosseis();
   };
 
