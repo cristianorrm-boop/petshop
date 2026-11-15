@@ -15,4 +15,14 @@
   <FilesMatch "\.(jpg|jpeg|png|webp|gif|svg)$">
     Header set Cache-Control "public, max-age=86400"
   </FilesMatch>
+  <!-- O código (JS/CSS) muda com frequência nesse projeto e o padrão do Hostinger
+       pra arquivos estáticos é 7 dias — sem isso, cada ajuste no admin ou na loja
+       podia continuar "sem aparecer" por até uma semana pra quem já visitou antes,
+       mesmo com o arquivo novo já no ar (foi o caso do checkbox "Produto em
+       promoção" não aparecendo). "no-cache" aqui não desliga o cache: só obriga o
+       navegador a confirmar com o servidor antes de usá-lo, então arquivo igual =
+       resposta rápida (304), arquivo novo = já aparece na hora. -->
+  <FilesMatch "\.(js|css)$">
+    Header set Cache-Control "no-cache, must-revalidate"
+  </FilesMatch>
 </IfModule>
