@@ -10,18 +10,30 @@
   ExpiresByType image/webp "access plus 1 day"
   ExpiresByType image/gif "access plus 1 day"
   ExpiresByType image/svg+xml "access plus 1 day"
+  # A CDN do Hostinger (hcdn) na frente do site usa o cabeçalho "Expires" pra
+  # decidir o próprio cache dela, servidor de borda por servidor de borda — e
+  # o padrão dela pra JS/CSS continuava sendo "daqui a 7 dias" mesmo com o
+  # Cache-Control abaixo dizendo "sempre confirmar com o servidor". Resultado:
+  # dependendo de qual servidor da CDN atendia a visita, o código novo não
+  # aparecia nem limpando cache do navegador nem em aba anônima (foi
+  # exatamente o caso do carrossel "Em promoção" sumido). Zerando o Expires
+  # aqui também tira essa brecha.
+  ExpiresByType application/javascript "access plus 0 seconds"
+  ExpiresByType application/x-javascript "access plus 0 seconds"
+  ExpiresByType text/javascript "access plus 0 seconds"
+  ExpiresByType text/css "access plus 0 seconds"
 </IfModule>
 <IfModule mod_headers.c>
   <FilesMatch "\.(jpg|jpeg|png|webp|gif|svg)$">
     Header set Cache-Control "public, max-age=86400"
   </FilesMatch>
-  <!-- O código (JS/CSS) muda com frequência nesse projeto e o padrão do Hostinger
-       pra arquivos estáticos é 7 dias — sem isso, cada ajuste no admin ou na loja
-       podia continuar "sem aparecer" por até uma semana pra quem já visitou antes,
-       mesmo com o arquivo novo já no ar (foi o caso do checkbox "Produto em
-       promoção" não aparecendo). "no-cache" aqui não desliga o cache: só obriga o
-       navegador a confirmar com o servidor antes de usá-lo, então arquivo igual =
-       resposta rápida (304), arquivo novo = já aparece na hora. -->
+  # O código (JS/CSS) muda com frequência nesse projeto e o padrão do Hostinger
+  # pra arquivos estáticos é 7 dias — sem isso, cada ajuste no admin ou na loja
+  # podia continuar "sem aparecer" por até uma semana pra quem já visitou antes,
+  # mesmo com o arquivo novo já no ar (foi o caso do checkbox "Produto em
+  # promoção" não aparecendo). "no-cache" aqui não desliga o cache: só obriga o
+  # navegador a confirmar com o servidor antes de usá-lo, então arquivo igual =
+  # resposta rápida (304), arquivo novo = já aparece na hora.
   <FilesMatch "\.(js|css)$">
     Header set Cache-Control "no-cache, must-revalidate"
   </FilesMatch>
