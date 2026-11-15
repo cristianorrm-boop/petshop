@@ -199,7 +199,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const qtdPromo = Math.min(24, Math.max(1, parseInt(config.qtdPromocoes, 10) || 8));
     const promocoes = [...lista.filter((p) => p.promocao)].sort(compararPorOrdem);
     $("#promo-container").innerHTML = promocoes.slice(0, qtdPromo).map(cardHtml).join("");
-    $("#home-promocoes").hidden = config.mostrarPromocoes === false || promocoes.length === 0;
+    const secaoPromo = $("#home-promocoes");
+    if (secaoPromo) secaoPromo.hidden = config.mostrarPromocoes === false || promocoes.length === 0;
+    // DIAGNÓSTICO TEMPORÁRIO (ver PR do carrossel "Em promoção" sumido) — remover depois.
+    const diag = document.createElement("div");
+    diag.style.cssText = "position:fixed;z-index:99999;left:0;right:0;top:0;background:#1d4ed8;color:#fff;padding:8px 14px;font:12px monospace;white-space:pre-wrap";
+    diag.textContent = `DIAG promoções — elemento #home-promocoes encontrado: ${!!secaoPromo} | config.mostrarPromocoes: ${JSON.stringify(config.mostrarPromocoes)} | promocoes.length: ${promocoes.length} | hidden aplicado: ${secaoPromo ? secaoPromo.hidden : "n/a"} | offsetParent null?: ${secaoPromo ? secaoPromo.offsetParent === null : "n/a"}`;
+    document.body.appendChild(diag);
     iniciarCarrosseis();
   };
 
