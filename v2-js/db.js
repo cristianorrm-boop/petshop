@@ -33,7 +33,7 @@
     siteUrl: "",           // endereço público da loja (QR Code e link copiado); em branco = endereço atual do painel
     zapFlutuante: true,
     // Aparência
-    corPrimaria: "#4f46e5",
+    corPrimaria: "#4a0e0e",
     corSecundaria: "#111827",
     corDestaque: "#dc2626",
     corFundo: "#f6f7fb",

@@ -241,7 +241,7 @@ window.Admin.modulos.push((A) => {
         .kpis { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
         .kpi { border: 1px solid #d1d5db; border-radius: 8px; padding: 6px 12px; } .kpi span { display: block; color: #6b7280; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; } .kpi b { font-size: 14px; }
         table { width: 100%; border-collapse: collapse; }
-        th { background: #4f46e5; color: #fff; padding: 6px 7px; text-align: left; font-size: 10px; } th.n, td.n { text-align: right; }
+        th { background: #4a0e0e; color: #fff; padding: 6px 7px; text-align: left; font-size: 10px; } th.n, td.n { text-align: right; }
         td { padding: 5px 7px; border-bottom: 1px solid #e5e7eb; } tbody tr:nth-child(even) td { background: #f9fafb; }
         thead { display: table-header-group; } tr { break-inside: avoid; }
         .sit { display: inline-block; padding: 1px 8px; border-radius: 999px; font-weight: 700; font-size: 10px; }

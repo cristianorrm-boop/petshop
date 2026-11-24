@@ -1,4 +1,4 @@
-:root { --primaria: #4f46e5; --on-primaria: #fff; --bg: #f3f4f8; --card: #fff; --texto: #1f2937; --suave: #6b7280; --borda: #e5e7eb; --ok: #16a34a; --erro: #dc2626; --aviso: #d97706; --side: var(--primaria); }
+:root { --primaria: #4a0e0e; --on-primaria: #fff; --bg: #f3f4f8; --card: #fff; --texto: #1f2937; --suave: #6b7280; --borda: #e5e7eb; --ok: #16a34a; --erro: #dc2626; --aviso: #d97706; --side: var(--primaria); }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--texto); }
 button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
