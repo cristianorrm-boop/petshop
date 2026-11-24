@@ -3,9 +3,9 @@
 window.Admin.modulos.push((A) => {
   const { $, toast, tentar } = A;
   const { esc, auth } = DB;
-  // Impressora térmica e aviso de pedido novo não foram copiados do loja-online
-  // (a cliente não tem esse equipamento); configMudou segue existindo como
-  // no-op porque admin-estoque.js e este próprio módulo chamam depois de salvar.
+  // Impressora térmica não foi copiada do loja-online (a cliente não tem esse equipamento).
+  // O aviso sonoro/visual de pedido novo é implementado em admin-aviso.js, que substitui
+  // este no-op; ele existe aqui só como fallback caso aquele módulo não seja carregado.
   A.configMudou = A.configMudou || (() => {});
 
   const SECOES = [
@@ -152,6 +152,14 @@ window.Admin.modulos.push((A) => {
           campo("E-mail (opcional)", "email", c.email, 'type="email"'),
           campo("Instagram (@usuario ou link)", "instagram", c.instagram),
           campo("Facebook (usuario ou link)", "facebook", c.facebook))}
+        ${titulo("Avisos de novo pedido", "Com o painel aberto no navegador (pode ficar em segundo plano), avisa quando chegar um pedido pelo site.")}
+        ${marcar("Avisar quando chegar um pedido pelo site", "avisoPedidoSite", c.avisoPedidoSite, "Mostra um aviso na tela, pisca o título da aba e (se permitido) envia uma notificação do navegador.")}
+        ${marcar("Tocar um som no aviso", "avisoSom", c.avisoSom)}
+        <div class="barra-acoes" style="margin-top:8px">
+          <button type="button" class="btn sec peq" id="aviso-permissao"><i class="fa-regular fa-bell"></i> Ativar notificações do navegador</button>
+          <button type="button" class="btn sec peq" id="aviso-teste">Testar aviso</button>
+          <span class="dica" id="aviso-estado"></span>
+        </div>
         ${titulo("Localização")}
         ${grade(campo("Endereço da loja", "endereco", c.endereco), campo("Horário de funcionamento", "horario", c.horario))}
         ${marcar("Mostrar mapa na página inicial", "mostrarMapa", c.mostrarMapa, "O mapa aparece quando houver endereço.")}
@@ -276,6 +284,20 @@ window.Admin.modulos.push((A) => {
     form.addEventListener("input", sujo);
     form.addEventListener("change", sujo);
 
+    // avisos de novo pedido: permissão de notificação e teste não são salvos no formulário
+    const estadoNotif = () => {
+      $("#aviso-estado").textContent = !("Notification" in window) ? "Este navegador não suporta notificações."
+        : Notification.permission === "granted" ? "Notificações do navegador: ativadas."
+        : Notification.permission === "denied" ? "Notificações bloqueadas no navegador (libere nas permissões do site)." : "Notificações do navegador: ainda não ativadas.";
+    };
+    estadoNotif();
+    $("#aviso-permissao").onclick = async () => {
+      if (!("Notification" in window)) return toast("Este navegador não suporta notificações.");
+      try { await Notification.requestPermission(); } catch { /* ignorado */ }
+      estadoNotif();
+    };
+    $("#aviso-teste").onclick = () => A.avisoTeste();
+
     // navegação entre seções
     const abrirSecao = (k) => {
       secaoAtual = k;
@@ -366,6 +388,7 @@ window.Admin.modulos.push((A) => {
       Object.assign(novo, {
         nomeLoja: f("nomeLoja"), slogan: f("slogan"), siteUrl: f("siteUrl"), whatsapp: f("whatsapp").replace(/\D/g, ""), telefone: f("telefone"), email: f("email"),
         instagram: f("instagram"), facebook: f("facebook"), endereco: f("endereco"), horario: f("horario"), mostrarMapa: on("mostrarMapa"), zapFlutuante: on("zapFlutuante"),
+        avisoPedidoSite: on("avisoPedidoSite"), avisoSom: on("avisoSom"),
         corPrimaria: f("corPrimaria"), corSecundaria: f("corSecundaria"), corDestaque: f("corDestaque"), corFundo: f("corFundo"), corTexto: f("corTexto"),
         fonte: f("fonte"), cantos: f("cantos"),
         logoUrl: f("logoEndereco") || dados.logo, bannerUrl: f("bannerEndereco") || dados.banner,
